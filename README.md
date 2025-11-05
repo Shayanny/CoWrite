@@ -1,10 +1,17 @@
-# MiniDocs
+# CoWrite
 
 **Work in progress for my Final Year Project at ATU Galway.**
 
-MiniDocs is a collaborative document editing platform built for real-time teamwork.  
-Users can create, edit, and share documents together through invite links or QR codes,  
-with a built-in chat for discussion.
+CoWrite will be a real-time collaborative document editing platform that enables teams to work together seamlessly. Users can create, edit, and share documents simultaneously through invite links or QR codes, with an integrated discussion box for communication without leaving the editor.
+
+---
+##Tech Stack
+
+Frontend: React + TypeScript (Vite)
+Backend: Go (Golang)
+Database: PostgreSQL
+Caching/Sessions: Redis
+Infrastructure: Docker Compose
 
 ---
 
@@ -31,6 +38,17 @@ Dockerfiles/ → Separate builds for frontend and backend
 - Connect the frontend to the backend via API  
 - Add database logic to FastAPI  
 - Implement WebSocket services for real-time document editing and chat  
+
+---
+## Key Features (Planned)
+
+Real-time collaborative editing (supporting 4+ simultaneous users)
+User authentication and session management
+Document sharing via unique URLs and QR codes
+Integrated discussion box
+User presence indicators
+Sub-300ms edit latency
+Version history tracking
 
 ---
 
