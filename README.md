@@ -5,7 +5,7 @@
 CoWrite will be a real-time collaborative document editing platform that enables teams to work together seamlessly. Users can create, edit, and share documents simultaneously through invite links or QR codes, with an integrated discussion box for communication without leaving the editor.
 
 ---
-##Tech Stack
+## Tech Stack
 
 Frontend: React + TypeScript (Vite)
 Backend: Go (Golang)
