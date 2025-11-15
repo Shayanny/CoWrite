@@ -1,8 +1,8 @@
 package main
 
 import (
-	"log"
 	"fmt"
+	"log"
 	"net/http"
 	"os"
 
@@ -14,13 +14,6 @@ import (
 )
 
 func main() {
-	
-	http.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
-		fmt.Fprintln(w, "MiniDocs API is running")
-	})
-	fmt.Println("API listening on :8080")
-	fmt.Println("Shayanny here! :)")
-	http.ListenAndServe(":8080", nil)
 
 	// Load environment variables
 	err := godotenv.Load()
@@ -47,5 +40,6 @@ func main() {
 
 	// Start server
 	log.Printf(" Server starting on port %s...", port)
+	fmt.Println("Shayanny here! :)")
 	log.Fatal(http.ListenAndServe(":"+port, router))
 }
