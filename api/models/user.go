@@ -13,7 +13,7 @@ type User struct {
 	ID           int       `json:"id"`
 	Username     string    `json:"username"`
 	Email        string    `json:"email"`
-	PasswordHash string    `json:"-"`  // The "-" means don't include in JSON responses
+	PasswordHash string    `json:"-"` // The "-" means don't include in JSON responses
 	CreatedAt    time.Time `json:"created_at"`
 }
 
@@ -30,7 +30,7 @@ func CreateUser(db *sql.DB, username, email, password string) error {
 		INSERT INTO users (username, email, password_hash, created_at)
 		VALUES ($1, $2, $3, $4)
 	`
-	
+
 	_, err = db.Exec(query, username, email, string(hashedPassword), time.Now())
 	if err != nil {
 		return err
@@ -43,14 +43,14 @@ func CreateUser(db *sql.DB, username, email, password string) error {
 func GetUserByEmail(db *sql.DB, email string) (*User, error) {
 	//User{} creates an empty User and gets its pointer (&)
 	user := &User{}
-	
+
 	query := `
 		SELECT id, username, email, password_hash, created_at
 		FROM users
 		WHERE email = $1
 	`
-	
-	err := db.QueryRow(query).Scan(&user.ID, &user.Username, &user.Email, &user.PasswordHash, &user.CreatedAt)
+
+	err := db.QueryRow(query, email).Scan(&user.ID, &user.Username, &user.Email, &user.PasswordHash, &user.CreatedAt)
 	if err != nil {
 		if err == sql.ErrNoRows {
 			return nil, errors.New("user not found")
