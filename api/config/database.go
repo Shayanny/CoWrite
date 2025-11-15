@@ -45,5 +45,5 @@ func InitDB() {
 		log.Fatal("Error pinging database:", err)
 	}
 
-	fmt.Println("✅ Successfully connected to PostgreSQL!")
+	fmt.Println("Successfully connected to PostgreSQL!")
 }
