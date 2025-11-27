@@ -31,6 +31,13 @@ func main() {
 	// Create router
 	router := mux.NewRouter()
 
+	// Testing route
+	router.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
+    w.WriteHeader(http.StatusOK)
+    w.Write([]byte("CoWrite API is running!"))
+	}).Methods("GET")
+
+
 	// Authentication routes
 	router.HandleFunc("/api/register", handlers.Register).Methods("POST")
 	router.HandleFunc("/api/login", handlers.Login).Methods("POST")
