@@ -59,6 +59,9 @@ func main() {
 		})
 	}))).Methods("GET")
 
+	// Document routes
+	router.HandleFunc("/api/documents", handlers.Register).Methods("POST")
+
 	// Get port from environment or use default
 	port := os.Getenv("PORT")
 	if port == "" {
