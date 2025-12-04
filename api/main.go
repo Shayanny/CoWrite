@@ -59,6 +59,27 @@ func main() {
 		})
 	}))).Methods("GET")
 
+	// Document routes (all protected with AuthMiddleware)
+	router.Handle("/api/documents", middleware.AuthMiddleware(
+	http.HandlerFunc(handlers.CreateDocument),
+	)).Methods("POST")
+
+	router.Handle("/api/documents", middleware.AuthMiddleware(
+	http.HandlerFunc(handlers.GetMyDocuments),
+	)).Methods("GET")
+
+	router.Handle("/api/documents/{id}", middleware.AuthMiddleware(
+	http.HandlerFunc(handlers.GetDocument),
+	)).Methods("GET")
+
+	router.Handle("/api/documents/{id}", middleware.AuthMiddleware(
+	http.HandlerFunc(handlers.UpdateDocument),
+	)).Methods("PUT")
+
+	router.Handle("/api/documents/{id}", middleware.AuthMiddleware(
+	http.HandlerFunc(handlers.DeleteDocument),
+	)).Methods("DELETE")
+
 	// Get port from environment or use default
 	port := os.Getenv("PORT")
 	if port == "" {
