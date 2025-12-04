@@ -36,6 +36,7 @@ func CreateUser(db *sql.DB, username, email, password string) error {
 		return err
 	}
 
+
 	return nil
 }
 
