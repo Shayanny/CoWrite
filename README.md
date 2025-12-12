@@ -17,16 +17,40 @@ Infrastructure: Docker Compose
 
 ## Project Structure so far
 
-client/ → React + TypeScript frontend (Vite)
-api/ → FastAPI backend
-docker-compose.yml → Manages all services (client, api, PostgreSQL, Redis)
-Dockerfiles/ → Separate builds for frontend and backend
+CoWrite/
+├── client/          # React + TypeScript frontend (Vite)
+├── api/             # Go backend
+│   ├── config/      # Database configuration
+│   ├── handlers/    # HTTP request handlers
+│   ├── middleware/  # Authentication middleware
+│   ├── models/      # Data models (User, Document)
+│   └── utils/       # JWT utilities
+├── docker-compose.yml
+└── README.md
 
 ---
 
 ## Current Progress
 
-- Frontend and backend run successfully through `docker compose up`   
+Docker Environment: Multi-service orchestration (client, api, PostgreSQL, Redis)
+User Authentication:
+
+User registration and login
+JWT token generation and validation
+Password hashing with bcrypt
+Authentication middleware for protected routes
+
+
+Database Migration: Successfully migrated from local PostgreSQL to Neon cloud database
+Document CRUD Operations:
+
+Create, Read, Update, Delete documents
+Owner validation and permissions
+Database schema and handlers implemented
+
+
+Frontend Foundation: Login page with styling
+GitHub Project Board: Task tracking and progress management
 - Local validation:
   - **Frontend:** [http://localhost:5173](http://localhost:5173)
   - **API:** [http://localhost:8080](http://localhost:8080)
@@ -36,7 +60,6 @@ Dockerfiles/ → Separate builds for frontend and backend
 ## Next Steps
 
 - Connect the frontend to the backend via API  
-- Add database logic to FastAPI  
 - Implement WebSocket services for real-time document editing and chat  
 
 ---
