@@ -13,6 +13,7 @@ import (
 	"minidocs/api/utils"
 
 	"github.com/gorilla/mux"
+	 corsHandlers "github.com/gorilla/handlers"
 	"github.com/joho/godotenv"
 )
 
@@ -86,8 +87,14 @@ func main() {
 		port = "8080"
 	}
 
+	corsHandler := corsHandlers.CORS(
+	corsHandlers.AllowedOrigins([]string{"http://localhost:5173"}),
+	corsHandlers.AllowedMethods([]string{"GET", "POST", "PUT", "DELETE", "OPTIONS"}),
+	corsHandlers.AllowedHeaders([]string{"Content-Type", "Authorization"}),
+	)(router)
+
 	// Start server
 	log.Printf(" Server starting on port %s...", port)
 	fmt.Println("Shayanny here! :)")
-	log.Fatal(http.ListenAndServe(":"+port, router))
+	log.Fatal(http.ListenAndServe(":"+port, corsHandler))
 }
