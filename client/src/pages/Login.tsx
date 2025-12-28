@@ -22,8 +22,9 @@ function Login() {
         if (response.error) {
             setError(response.error);
         } else {
-            alert('Login successful!');
             console.log('User:', authService.getUser());
+            // Full page reload to /dashboard
+            window.location.href = '/dashboard';
         }
     };
 
