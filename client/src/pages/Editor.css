@@ -1,0 +1,130 @@
+.editor-container {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  background: #f5f5f5;
+}
+
+.editor-header {
+  background: white;
+  padding: 15px 30px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  position: sticky;
+  top: 0;
+  z-index: 100;
+}
+
+.btn-back {
+  background: #f5f5f5;
+  color: #333;
+  border: 1px solid #ddd;
+  padding: 8px 16px;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 14px;
+  transition: background 0.3s;
+}
+
+.btn-back:hover {
+  background: #e0e0e0;
+}
+
+.editor-actions {
+  display: flex;
+  align-items: center;
+  gap: 15px;
+}
+
+.save-status {
+  color: #4caf50;
+  font-size: 14px;
+  font-weight: 500;
+}
+
+.btn-save {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  border: none;
+  padding: 10px 24px;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 14px;
+  font-weight: 600;
+  transition: opacity 0.3s;
+}
+
+.btn-save:hover {
+  opacity: 0.9;
+}
+
+.btn-save:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.editor-content {
+  flex: 1;
+  max-width: 900px;
+  width: 100%;
+  margin: 30px auto;
+  padding: 0 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.editor-title {
+  font-size: 32px;
+  font-weight: 600;
+  border: none;
+  outline: none;
+  background: white;
+  padding: 20px;
+  border-radius: 8px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+  font-family: inherit;
+}
+
+.editor-title::placeholder {
+  color: #ccc;
+}
+
+.editor-textarea {
+  flex: 1;
+  min-height: 500px;
+  font-size: 16px;
+  line-height: 1.6;
+  border: none;
+  outline: none;
+  background: white;
+  padding: 20px;
+  border-radius: 8px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+  font-family: inherit;
+  resize: vertical;
+}
+
+.editor-textarea::placeholder {
+  color: #ccc;
+}
+
+.editor-footer {
+  background: white;
+  padding: 15px 30px;
+  text-align: center;
+  border-top: 1px solid #eee;
+}
+
+.doc-info {
+  color: #999;
+  font-size: 13px;
+}
+
+.error {
+  color: #f44336;
+  text-align: center;
+  padding: 20px;
+}

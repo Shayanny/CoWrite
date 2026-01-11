@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import Login from './pages/Login';
 import Register from './pages/Register';
+import Editor from './pages/Editor';
 import Dashboard from './pages/Dashboard';
 import { authService } from './services/authService';
 import './App.css';
@@ -19,6 +20,16 @@ function App() {
     window.addEventListener('popstate', handlePopState);
     return () => window.removeEventListener('popstate', handlePopState);
   }, []);
+
+
+  // Check authentication on mount
+  useEffect(() => {
+    const token = localStorage.getItem('token');
+    // Redirect to login if no token and not on public pages
+    if (!token && currentPath !== '/' && currentPath !== '/register') {
+      window.location.pathname = '/';
+    }
+  }, [currentPath]);
 
   // Redirect to login if not authenticated
   if (!isAuthenticated && currentPath !== '/register') {
