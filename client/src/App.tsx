@@ -55,6 +55,10 @@ function App() {
     return <Dashboard />;
   }
 
+  if (currentPath.startsWith('/document/')) {
+    return <Editor />;
+  }
+
   if (currentPath === '/') {
     return <Login />;
   }
