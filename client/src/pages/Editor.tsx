@@ -1,6 +1,8 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { documentService, type Document } from '../services/documentService';
 import './Editor.css';
+import ReactQuill from 'react-quill';
+import 'react-quill/dist/quill.snow.css';
 
 function Editor() {
   // Get document ID from URL
@@ -9,16 +11,42 @@ function Editor() {
 
   const [document, setDocument] = useState<Document | null>(null);
   const [title, setTitle] = useState('');
+
   const [content, setContent] = useState('');
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [saveStatus, setSaveStatus] = useState(''); // 'Saved' or 'Saving...'
   const [error, setError] = useState('');
+  const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
 
+  // Reference for auto-save timer
+  const autoSaveTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   // Load document when component mounts
   useEffect(() => {
     loadDocument();
   }, []);
+
+  // Auto-save effect - saves every 3 seconds if there are changes
+  useEffect(() => {
+    if (hasUnsavedChanges && !saving) {
+      // Clear existing timer
+      if (autoSaveTimerRef.current) {
+        clearTimeout(autoSaveTimerRef.current);
+      }
+
+      // Set new timer for 3 seconds
+      autoSaveTimerRef.current = setTimeout(() => {
+        handleSave(true); // true = auto-save
+      }, 3000);
+    }
+
+    // Cleanup timer on unmount
+    return () => {
+      if (autoSaveTimerRef.current) {
+        clearTimeout(autoSaveTimerRef.current);
+      }
+    };
+  }, [title, content, hasUnsavedChanges]);
 
   const loadDocument = async () => {
     setLoading(true);
@@ -35,9 +63,19 @@ function Editor() {
     setLoading(false);
   };
 
-  const handleSave = async () => {
+  const handleTitleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setTitle(e.target.value);
+    setHasUnsavedChanges(true);
+  };
+
+  const handleContentChange = (value: string) => {
+    setContent(value);
+    setHasUnsavedChanges(true);
+  };
+
+  const handleSave = async (isAutoSave = false) => {
     setSaving(true);
-    setSaveStatus('Saving...');
+    setSaveStatus(isAutoSave ? 'Auto-saving...' : 'Saving...');
 
     const response = await documentService.updateDocument(documentId, {
       title,
@@ -47,18 +85,53 @@ function Editor() {
     setSaving(false);
 
     if (response.error) {
-      alert('Failed to save: ' + response.error);
-      setSaveStatus('');
+      if (!isAutoSave) {
+        alert('Failed to save: ' + response.error);
+      };
+      setSaveStatus('Save failed');
     } else {
-      setSaveStatus('Saved ✓');
+
+      setHasUnsavedChanges(false); // Reset unsaved changes flag
+      setSaveStatus('Saved');
       // Clear "Saved" message after 2 seconds
       setTimeout(() => setSaveStatus(''), 2000);
     }
   };
 
+
   const handleBackToDashboard = () => {
-    window.location.href = '/dashboard';
+    if (hasUnsavedChanges) {
+      const confirmLeave = confirm('You have unsaved changes. Do you want to save before leaving?');
+      if (confirmLeave) {
+        handleSave();
+        setTimeout(() => {
+          window.location.href = '/dashboard';
+        }, 500);
+      } else {
+        window.location.href = '/dashboard';
+      }
+    } else {
+      window.location.href = '/dashboard';
+    }
   };
+
+  const modules = {
+    toolbar: [
+      [{ 'header': [1, 2, 3, false] }],
+      ['bold', 'italic', 'underline', 'strike'],
+      [{ 'list': 'ordered' }, { 'list': 'bullet' }],
+      [{ 'indent': '-1' }, { 'indent': '+1' }],
+      ['link'],
+      ['clean']
+    ],
+  };
+
+  const formats = [
+    'header',
+    'bold', 'italic', 'underline', 'strike',
+    'list', 'bullet', 'indent',
+    'link'
+  ];
 
   if (loading) {
     return (
@@ -85,8 +158,8 @@ function Editor() {
         </button>
         <div className="editor-actions">
           {saveStatus && <span className="save-status">{saveStatus}</span>}
-          <button 
-            onClick={handleSave} 
+          <button
+            onClick={() => handleSave(false)}
             className="btn-save"
             disabled={saving}
           >
@@ -99,16 +172,19 @@ function Editor() {
         <input
           type="text"
           value={title}
-          onChange={(e) => setTitle(e.target.value)}
+          onChange={handleTitleChange}
           placeholder="Document Title"
           className="editor-title"
         />
 
-        <textarea
+        <ReactQuill
+          theme="snow"
           value={content}
-          onChange={(e) => setContent(e.target.value)}
+          onChange={handleContentChange}
+          modules={modules}
+          formats={formats}
           placeholder="Start writing..."
-          className="editor-textarea"
+          className="editor-quill"
         />
       </div>
 
@@ -116,6 +192,9 @@ function Editor() {
         <span className="doc-info">
           Last updated: {document ? new Date(document.updated_at).toLocaleString() : 'Never'}
         </span>
+        {hasUnsavedChanges && !saving && (
+            <span className="unsaved-indicator"> • Unsaved changes</span>
+          )}
       </footer>
     </div>
   );

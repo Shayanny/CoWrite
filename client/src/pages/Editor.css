@@ -128,3 +128,100 @@
   text-align: center;
   padding: 20px;
 }
+
+/* Quill Editor Styles */
+.editor-quill {
+  height: 500px;
+  display: flex;
+  flex-direction: column;
+}
+
+.editor-quill .ql-toolbar {
+  border: 1px solid #e0e0e0;
+  border-radius: 6px 6px 0 0;
+  background: #fafafa;
+}
+
+.editor-quill .ql-container {
+  flex: 1;
+  font-size: 16px;
+  line-height: 1.6;
+  border: 1px solid #e0e0e0;
+  border-top: none;
+  border-radius: 0 0 6px 6px;
+}
+
+.editor-quill .ql-editor {
+  min-height: 450px;
+  padding: 20px;
+}
+
+.editor-quill .ql-editor.ql-blank::before {
+  color: #aaa;
+  font-style: italic;
+}
+
+/* Footer */
+.editor-footer {
+  margin-top: 30px;
+  padding-top: 15px;
+  border-top: 2px solid #e0e0e0;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 14px;
+  color: #666;
+}
+
+.doc-info {
+  color: #666;
+}
+
+.unsaved-indicator {
+  font-size: 13px;
+  color: #ff9800;
+  font-weight: 600;
+}
+
+/* Loading/Error States */
+.error {
+  color: #d32f2f;
+  font-size: 16px;
+  margin-bottom: 20px;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+  .editor-container {
+    padding: 10px;
+  }
+
+  .editor-header {
+    flex-direction: column;
+    gap: 15px;
+    align-items: flex-start;
+  }
+
+  .editor-actions {
+    width: 100%;
+    justify-content: space-between;
+  }
+
+  .editor-title {
+    font-size: 22px;
+  }
+
+  .editor-quill {
+    height: 400px;
+  }
+
+  .editor-quill .ql-editor {
+    min-height: 350px;
+  }
+
+  .editor-footer {
+    flex-direction: column;
+    gap: 10px;
+    align-items: flex-start;
+  }
+}
