@@ -67,6 +67,32 @@ function Dashboard() {
     window.location.href = '/';
   };
 
+  // Helper function to strip HTML and get plain text preview
+const getPlainTextPreview = (htmlContent: string, maxLength: number = 100): string => {
+  // Remove HTML tags
+  const plainText = htmlContent.replace(/<[^>]*>/g, ' ');
+  
+  // Decode HTML entities (like &nbsp;)
+  const decoded = plainText
+    .replace(/&nbsp;/g, ' ')
+    .replace(/&amp;/g, '&')
+    .replace(/&lt;/g, '<')
+    .replace(/&gt;/g, '>')
+    .replace(/&quot;/g, '"');
+  
+  // Remove extra whitespace (multiple spaces, newlines, tabs)
+  const cleaned = decoded
+    .replace(/\s+/g, ' ')  // Replace multiple spaces/newlines with single space
+    .trim();
+  
+  // Truncate if too long
+  if (cleaned.length > maxLength) {
+    return cleaned.substring(0, maxLength) + '...';
+  }
+  
+  return cleaned || 'Empty document';
+};
+
   return (
     <div className="dashboard">
       <header className="dashboard-header">
@@ -102,7 +128,7 @@ function Dashboard() {
             <div key={doc.id} className="document-card">
               <h3>{doc.title}</h3>
               <p className="doc-preview">
-                {doc.content.substring(0, 100) || 'Empty document'}
+                {getPlainTextPreview(doc.content, 100) || 'Empty document'}
                 {doc.content.length > 100 && '...'}
               </p>
               <div className="doc-meta">
