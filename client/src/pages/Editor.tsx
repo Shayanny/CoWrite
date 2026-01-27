@@ -177,15 +177,16 @@ function Editor() {
           className="editor-title"
         />
 
-        <ReactQuill
-          theme="snow"
-          value={content}
-          onChange={handleContentChange}
-          modules={modules}
-          formats={formats}
-          placeholder="Start writing..."
-          className="editor-quill"
-        />
+        <div className="editor-wrapper">
+          <ReactQuill
+            theme="snow"
+            value={content}
+            onChange={handleContentChange}
+            modules={modules}
+            formats={formats}
+            placeholder="Start writing..."
+          />
+        </div>
       </div>
 
       <footer className="editor-footer">
@@ -193,8 +194,8 @@ function Editor() {
           Last updated: {document ? new Date(document.updated_at).toLocaleString() : 'Never'}
         </span>
         {hasUnsavedChanges && !saving && (
-            <span className="unsaved-indicator"> • Unsaved changes</span>
-          )}
+          <span className="unsaved-indicator"> • Unsaved changes</span>
+        )}
       </footer>
     </div>
   );
