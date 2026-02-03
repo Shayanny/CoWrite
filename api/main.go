@@ -81,6 +81,11 @@ func main() {
 	http.HandlerFunc(handlers.DeleteDocument),
 	)).Methods("DELETE")
 
+	 // WebSocket route (auth is handled inside the handler via query param token)
+     router.HandleFunc("/ws/{documentId}", handlers.WebSocketHandler)
+
+
+
 	// Get port from environment or use default
 	port := os.Getenv("PORT")
 	if port == "" {
