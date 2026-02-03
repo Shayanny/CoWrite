@@ -3,6 +3,7 @@ import { documentService, type Document } from '../services/documentService';
 import './Editor.css';
 import ReactQuill from 'react-quill';
 import 'react-quill/dist/quill.snow.css';
+import { wsService } from '../services/websocketService';
 
 function Editor() {
   // Get document ID from URL
@@ -24,6 +25,13 @@ function Editor() {
   // Load document when component mounts
   useEffect(() => {
     loadDocument();
+  }, []);
+
+  // Disconnect WebSocket when leaving the editor
+  useEffect(() => {
+    return () => {
+      wsService.disconnect();
+    };
   }, []);
 
   // Auto-save effect - saves every 3 seconds if there are changes
@@ -58,6 +66,7 @@ function Editor() {
       setDocument(response.data);
       setTitle(response.data.title);
       setContent(response.data.content);
+      wsService.connect(documentId);
     }
 
     setLoading(false);
