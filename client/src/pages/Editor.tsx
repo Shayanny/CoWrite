@@ -19,6 +19,13 @@ function Editor() {
   const [saveStatus, setSaveStatus] = useState(''); // 'Saved' or 'Saving...'
   const [error, setError] = useState('');
   const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
+  const currentUser = JSON.parse(localStorage.getItem('user') || '{}');
+
+  const [chatMessages, setChatMessages] = useState<Array<{
+    type: 'join' | 'leave';
+    username: string;
+    timestamp: Date;
+  }>>([]);
 
   // Reference for auto-save timer
   const autoSaveTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -30,6 +37,35 @@ function Editor() {
   // Disconnect WebSocket when leaving the editor
   useEffect(() => {
     return () => {
+      wsService.disconnect();
+    };
+  }, []);
+
+  const unsubJoin = wsService.on('join', (message) => {
+    if (message.documentId === documentId && message.username !== currentUser.username) {
+      setChatMessages(prev => [...prev, {
+        type: 'join',
+        username: message.username,
+        timestamp: new Date()
+      }]);
+    }
+  });
+
+  const unsubLeave = wsService.on('leave', (message) => {
+    if (message.documentId === documentId && message.username !== currentUser.username) {
+      setChatMessages(prev => [...prev, {
+        type: 'leave',
+        username: message.username,
+        timestamp: new Date()
+      }]);
+    }
+  });
+
+  useEffect(() => {
+    return () => {
+      setChatMessages([]); // Clear chat when leaving
+      unsubJoin();
+      unsubLeave();
       wsService.disconnect();
     };
   }, []);
@@ -195,6 +231,25 @@ function Editor() {
             formats={formats}
             placeholder="Start writing..."
           />
+        </div>
+      </div>
+
+      <div className="chat-box">
+        <div className="chat-header">
+          <span>Activity</span>
+          <button className="btn-invite">+ Invite</button>
+        </div>
+        <div className="chat-messages">
+          {chatMessages.map((msg, idx) => (
+            <div key={idx} className="chat-message">
+              <span className={msg.type === 'join' ? 'join-msg' : 'leave-msg'}>
+                {msg.type === 'join' ? '🟢' : '🔴'} {msg.username} {msg.type === 'join' ? 'joined' : 'left'}
+              </span>
+              <span className="timestamp">
+                {msg.timestamp.toLocaleTimeString()}
+              </span>
+            </div>
+          ))}
         </div>
       </div>
 
