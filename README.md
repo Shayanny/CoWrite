@@ -15,25 +15,6 @@ Infrastructure: Docker Compose
 
 ---
 
-## Project Structure so far
-
-CoWrite/
-├── client/          # React + TypeScript frontend (Vite)
-│   ├── src/
-│   │   ├── pages/       # Login, Register, Dashboard, Editor
-│   │   ├── services/    # API, Auth, Document services
-│   │   └── App.tsx      # Client-side routing
-├── api/             # Go backend
-│   ├── config/      # Database configuration
-│   ├── handlers/    # HTTP request handlers (auth, documents)
-│   ├── middleware/  # Authentication middleware
-│   ├── models/      # Data models (User, Document)
-│   └── utils/       # JWT utilities
-├── docker-compose.yml
-└── README.md
-
----
-
 ## Current Progress
 
 Backend (Go):
@@ -90,7 +71,7 @@ GitHub Project Board: Task tracking and progress management
 ---
 ## Key Features (Planned)
 
-Real-time collaborative editing (supporting 4+ simultaneous users)
+Real-time collaborative editing 
 User authentication and session management
 Document sharing via unique URLs and QR codes
 Integrated discussion box
