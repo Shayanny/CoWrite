@@ -105,8 +105,13 @@ func GetDocument(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// TODO: Check if user has permission to view this document
-	// For now, anyone authenticated can view any document
+	claims := r.Context().Value(middleware.UserContextKey).(*utils.Claims)
+
+	if doc.OwnerID != claims.UserID {
+    w.WriteHeader(http.StatusForbidden)
+    json.NewEncoder(w).Encode(ErrorResponse{Error: "You don't have permission to view this document"})
+    return
+	}
 
 	// Return document
 	w.WriteHeader(http.StatusOK)
