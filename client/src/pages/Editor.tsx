@@ -44,23 +44,41 @@ function Editor() {
         // Add to activity feed (only if not current user)
         if (message.username !== currentUser.username) {
           setChatMessages(prev => {
+            // Check if user already joined in last 2 seconds
+            const recentJoin = prev.find(
+              msg => msg.type === 'join' &&
+                msg.username === message.username &&
+                Date.now() - msg.timestamp.getTime() < 2000
+            );
+
+            // Skip if duplicate within 2 seconds
+            if (recentJoin) return prev;
+
             const newMessages = [...prev, {
               type: 'join' as const,
               username: message.username,
               timestamp: new Date()
             }];
-            // Keep only last 10 messages
-            return newMessages.slice(-10);
+            // Keep only last 20 messages
+            return newMessages.slice(-20);
           });
         }
 
-        // Add to active users list
+        // Add to active users list (prevent duplicates)
         setActiveUsers(prev => {
           if (!prev.includes(message.username)) {
             return [...prev, message.username];
           }
           return prev;
         });
+      }
+    });
+
+    const unsubMembers = wsService.on('members', (message) => {
+      if (message.documentId === documentId) {
+        // Set active users from the server's list
+        const members = message.payload as string[];
+        setActiveUsers(members);
       }
     });
 
@@ -98,6 +116,7 @@ function Editor() {
       unsubJoin();
       unsubLeave();
       unsubEdit();
+      unsubMembers();
       wsService.disconnect();
     };
   }, []); // Empty array = runs once on mount, cleanup on unmount
@@ -134,6 +153,8 @@ function Editor() {
       setTitle(response.data.title);
       setContent(response.data.content);
       wsService.connect(documentId);
+
+      setActiveUsers([currentUser.username]);
     }
 
     setLoading(false);

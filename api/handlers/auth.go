@@ -55,6 +55,26 @@ func Register(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	existingUser, err := models.GetUserByUsername(config.DB, req.Username)
+	if err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		json.NewEncoder(w).Encode(ErrorResponse{Error: "Database error"})
+		return
+	}
+	if existingUser != nil {
+		w.WriteHeader(http.StatusConflict)
+		json.NewEncoder(w).Encode(ErrorResponse{Error: "Username already taken"})
+		return
+	}
+
+	// Check if email already exists (you might already have this)
+	existingEmail, err := models.GetUserByEmail(config.DB, req.Email)
+	if err == nil && existingEmail != nil {
+		w.WriteHeader(http.StatusConflict)
+		json.NewEncoder(w).Encode(ErrorResponse{Error: "Email already registered"})
+		return
+	}
+
 	// Create user in database by calling the function and capturing any error
 	err = models.CreateUser(config.DB, req.Username, req.Email, req.Password)
 	if err != nil {

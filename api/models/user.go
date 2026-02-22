@@ -36,7 +36,6 @@ func CreateUser(db *sql.DB, username, email, password string) error {
 		return err
 	}
 
-
 	return nil
 }
 
@@ -66,4 +65,25 @@ func GetUserByEmail(db *sql.DB, email string) (*User, error) {
 func (u *User) CheckPassword(password string) bool {
 	err := bcrypt.CompareHashAndPassword([]byte(u.PasswordHash), []byte(password))
 	return err == nil
+}
+
+// GetUserByUsername retrieves a user by their username
+func GetUserByUsername(db *sql.DB, username string) (*User, error) {
+	user := &User{}
+
+	query := `
+		SELECT id, username, email, password_hash, created_at
+		FROM users
+		WHERE username = $1
+	`
+
+	err := db.QueryRow(query, username).Scan(&user.ID, &user.Username, &user.Email, &user.PasswordHash, &user.CreatedAt)
+	if err != nil {
+		if err == sql.ErrNoRows {
+			return nil, nil // Username doesn't exist (not an error, just not found)
+		}
+		return nil, err // Database error
+	}
+
+	return user, nil
 }

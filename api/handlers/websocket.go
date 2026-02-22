@@ -39,10 +39,29 @@ type Room struct {
 	mu      sync.RWMutex // protects the clients map
 }
 
+// getMembers returns a list of all unique usernames currently in the room.
+func (r *Room) getMembers() []string {
+	r.mu.RLock()
+	defer r.mu.RUnlock()
+
+	members := make([]string, 0, len(r.clients))
+	seen := make(map[string]bool)
+
+	for client := range r.clients {
+		// Avoid duplicates if same user has multiple connections
+		if !seen[client.username] {
+			members = append(members, client.username)
+			seen[client.username] = true
+		}
+	}
+
+	return members
+}
+
 // Message is the generic envelope for everything we send/receive over the WebSocket.
 // The "type" field lets us distinguish between edit operations, cursor moves, join/leave events, etc.
 type Message struct {
-	Type       string          `json:"type"`              // e.g. "edit", "join", "leave", "cursor"
+	Type       string          `json:"type"` // e.g. "edit", "join", "leave", "cursor"
 	DocumentID int             `json:"documentId"`
 	UserID     int             `json:"userId"`
 	Username   string          `json:"username"`
@@ -50,7 +69,7 @@ type Message struct {
 }
 
 // roomManager holds all active rooms and guards the map with a mutex.
-// It is a singleton 
+// It is a singleton
 var roomManager = struct {
 	rooms map[int]*Room // keyed by document ID
 	mu    sync.RWMutex
@@ -140,14 +159,14 @@ func WebSocketHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	//  3. Upgrade HTTP to WebSocket 
+	//  3. Upgrade HTTP to WebSocket
 	conn, err := upgrader.Upgrade(w, r, nil)
 	if err != nil {
 		log.Printf("WebSocket upgrade error: %v", err)
 		return // upgrader already wrote the HTTP error
 	}
 
-	// 4. Create the Client and register it in the room 
+	// 4. Create the Client and register it in the room
 	client := &Client{
 		conn:       conn,
 		send:       make(chan []byte, 64), // 64-message buffer before we consider the client stalled
@@ -173,9 +192,19 @@ func WebSocketHandler(w http.ResponseWriter, r *http.Request) {
 	// Also send the join message back to the new client so they know their own connection is live
 	client.send <- joinMsg
 
-	log.Printf("User %s (ID %d) joined document %d", claims.Username, claims.UserID, documentID)
+	// Send current room members to the new client
+	members := room.getMembers()
+	memberListMsg, _ := json.Marshal(Message{
+		Type:       "members",
+		DocumentID: documentID,
+		UserID:     claims.UserID,
+		Username:   claims.Username,
+		Payload:    json.RawMessage(mustMarshal(members)),
+	})
+	client.send <- memberListMsg
 
-	//  6. Start the write pump (goroutine) and read pump (current goroutine) 
+	log.Printf("User %s (ID %d) joined document %d", claims.Username, claims.UserID, documentID)
+	//  6. Start the write pump (goroutine) and read pump (current goroutine)
 	go writePump(client)
 	readPump(client, room)
 }
@@ -246,4 +275,14 @@ func writePump(client *Client) {
 			break
 		}
 	}
+}
+
+// mustMarshal is a helper that marshals data to JSON, panicking on error.
+// Safe to use here because we control the input ([]string).
+func mustMarshal(v interface{}) []byte {
+	data, err := json.Marshal(v)
+	if err != nil {
+		panic(err)
+	}
+	return data
 }
