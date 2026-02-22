@@ -21,6 +21,8 @@ function Editor() {
   const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
   const currentUser = JSON.parse(localStorage.getItem('user') || '{}');
 
+  const syncTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
   const [chatMessages, setChatMessages] = useState<Array<{
     type: 'join' | 'leave';
     username: string;
@@ -63,7 +65,8 @@ function Editor() {
 
   const unsubEdit = wsService.on('edit', (message) => {
     if (message.userId !== currentUser.id && message.documentId === documentId) {
-      setContent(message.payload as string);
+      const newContent = (message.payload as any).content;
+      setContent(newContent);
     }
   });
 
@@ -124,8 +127,15 @@ function Editor() {
     setContent(value);
     setHasUnsavedChanges(true);
 
-    // Send the edit to other users via WebSocket
-    wsService.send('edit', value);
+    // Clear existing sync timer
+    if (syncTimerRef.current) {
+      clearTimeout(syncTimerRef.current);
+    }
+
+    // Send update after 500ms of no typing
+    syncTimerRef.current = setTimeout(() => {
+      wsService.send('edit', { content: value });
+    }, 500);  // Wait 500ms after user stops typing
   };
 
   const handleSave = async (isAutoSave = false) => {
