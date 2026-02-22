@@ -85,7 +85,6 @@ func main() {
      router.HandleFunc("/ws/{documentId}", handlers.WebSocketHandler)
 
 
-
 	// Get port from environment or use default
 	port := os.Getenv("PORT")
 	if port == "" {

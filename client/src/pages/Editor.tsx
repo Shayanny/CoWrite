@@ -61,11 +61,18 @@ function Editor() {
     }
   });
 
+  const unsubEdit = wsService.on('edit', (message) => {
+    if (message.userId !== currentUser.id && message.documentId === documentId) {
+      setContent(message.payload as string);
+    }
+  });
+
   useEffect(() => {
     return () => {
       setChatMessages([]); // Clear chat when leaving
       unsubJoin();
       unsubLeave();
+      unsubEdit();
       wsService.disconnect();
     };
   }, []);
@@ -116,6 +123,9 @@ function Editor() {
   const handleContentChange = (value: string) => {
     setContent(value);
     setHasUnsavedChanges(true);
+
+    // Send the edit to other users via WebSocket
+    wsService.send('edit', value);
   };
 
   const handleSave = async (isAutoSave = false) => {
