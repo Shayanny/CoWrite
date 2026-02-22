@@ -87,13 +87,23 @@ function Editor() {
         // Add to activity feed (only if not current user)
         if (message.username !== currentUser.username) {
           setChatMessages(prev => {
+            // Check if user already left in last 2 seconds
+            const recentLeave = prev.find(
+              msg => msg.type === 'leave' &&
+                msg.username === message.username &&
+                Date.now() - msg.timestamp.getTime() < 2000
+            );
+
+            // Skip if duplicate within 2 seconds
+            if (recentLeave) return prev;
+
             const newMessages = [...prev, {
               type: 'leave' as const,
               username: message.username,
               timestamp: new Date()
             }];
             // Keep only last 10 messages
-            return newMessages.slice(-10);
+            return newMessages.slice(-20);
           });
         }
 
