@@ -22,6 +22,7 @@ function Editor() {
   const currentUser = JSON.parse(localStorage.getItem('user') || '{}');
 
   const syncTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const [activeUsers, setActiveUsers] = useState<string[]>([]);
 
   const [chatMessages, setChatMessages] = useState<Array<{
     type: 'join' | 'leave';
@@ -36,50 +37,70 @@ function Editor() {
     loadDocument();
   }, []);
 
-  // Disconnect WebSocket when leaving the editor
+  // Set up WebSocket listeners once on mount
   useEffect(() => {
+    const unsubJoin = wsService.on('join', (message) => {
+      if (message.documentId === documentId) {
+        // Add to activity feed (only if not current user)
+        if (message.username !== currentUser.username) {
+          setChatMessages(prev => {
+            const newMessages = [...prev, {
+              type: 'join' as const,
+              username: message.username,
+              timestamp: new Date()
+            }];
+            // Keep only last 10 messages
+            return newMessages.slice(-10);
+          });
+        }
+
+        // Add to active users list
+        setActiveUsers(prev => {
+          if (!prev.includes(message.username)) {
+            return [...prev, message.username];
+          }
+          return prev;
+        });
+      }
+    });
+
+    const unsubLeave = wsService.on('leave', (message) => {
+      if (message.documentId === documentId) {
+        // Add to activity feed (only if not current user)
+        if (message.username !== currentUser.username) {
+          setChatMessages(prev => {
+            const newMessages = [...prev, {
+              type: 'leave' as const,
+              username: message.username,
+              timestamp: new Date()
+            }];
+            // Keep only last 10 messages
+            return newMessages.slice(-10);
+          });
+        }
+
+        // Remove from active users list
+        setActiveUsers(prev => prev.filter(user => user !== message.username));
+      }
+    });
+
+    const unsubEdit = wsService.on('edit', (message) => {
+      if (message.userId !== currentUser.id && message.documentId === documentId) {
+        const newContent = (message.payload as any).content;
+        setContent(newContent);
+      }
+    });
+
+    // Cleanup all subscriptions when component unmounts
     return () => {
-      wsService.disconnect();
-    };
-  }, []);
-
-  const unsubJoin = wsService.on('join', (message) => {
-    if (message.documentId === documentId && message.username !== currentUser.username) {
-      setChatMessages(prev => [...prev, {
-        type: 'join',
-        username: message.username,
-        timestamp: new Date()
-      }]);
-    }
-  });
-
-  const unsubLeave = wsService.on('leave', (message) => {
-    if (message.documentId === documentId && message.username !== currentUser.username) {
-      setChatMessages(prev => [...prev, {
-        type: 'leave',
-        username: message.username,
-        timestamp: new Date()
-      }]);
-    }
-  });
-
-  const unsubEdit = wsService.on('edit', (message) => {
-    if (message.userId !== currentUser.id && message.documentId === documentId) {
-      const newContent = (message.payload as any).content;
-      setContent(newContent);
-    }
-  });
-
-  useEffect(() => {
-    return () => {
-      setChatMessages([]); // Clear chat when leaving
+      setChatMessages([]);
+      setActiveUsers([]);
       unsubJoin();
       unsubLeave();
       unsubEdit();
       wsService.disconnect();
     };
-  }, []);
-
+  }, []); // Empty array = runs once on mount, cleanup on unmount
   // Auto-save effect - saves every 3 seconds if there are changes
   useEffect(() => {
     if (hasUnsavedChanges && !saving) {
@@ -259,6 +280,26 @@ function Editor() {
           <span>Activity</span>
           <button className="btn-invite">+ Invite</button>
         </div>
+
+        {/* Show active users */}
+        {activeUsers.length > 0 && (
+          <div className="active-users">
+            <div className="active-users-header">
+              Active Users ({activeUsers.length})
+            </div>
+            <div className="active-users-list">
+              {activeUsers.map((username, idx) => (
+                <div key={idx} className="active-user">
+                  <span className="user-indicator">🟢</span>
+                  <span className="username">{username}</span>
+                  {username === currentUser.username && <span className="you-badge">(you)</span>}
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* Activity feed */}
         <div className="chat-messages">
           {chatMessages.map((msg, idx) => (
             <div key={idx} className="chat-message">

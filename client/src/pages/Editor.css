@@ -276,3 +276,40 @@
   font-size: 12px;
   color: #999;
 }
+
+.active-users {
+  padding: 10px;
+  border-bottom: 1px solid #444;
+  background: #1a1a1a;
+}
+
+.active-users-header {
+  font-size: 12px;
+  color: #888;
+  margin-bottom: 8px;
+  font-weight: 600;
+}
+
+.active-users-list {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.active-user {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 14px;
+  color: #ddd;
+}
+
+.user-indicator {
+  font-size: 10px;
+}
+
+.you-badge {
+  font-size: 11px;
+  color: #888;
+  font-style: italic;
+}
