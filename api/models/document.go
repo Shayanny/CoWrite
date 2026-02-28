@@ -159,3 +159,29 @@ func DeleteDocument(db *sql.DB, id int) error {
 
 	return nil
 }
+
+// ShareDocument shares a document with another user
+func ShareDocument(db *sql.DB, documentID int, sharedWithUserID int) error {
+	query := `
+		INSERT INTO document_shares (document_id, shared_with_user_id)
+		VALUES ($1, $2)
+		ON CONFLICT (document_id, shared_with_user_id) DO NOTHING
+	`
+	
+	_, err := db.Exec(query, documentID, sharedWithUserID)
+	return err
+}
+
+// IsDocumentSharedWithUser checks if a document is shared with a specific user
+func IsDocumentSharedWithUser(db *sql.DB, documentID int, userID int) (bool, error) {
+	var exists bool
+	query := `
+		SELECT EXISTS(
+			SELECT 1 FROM document_shares
+			WHERE document_id = $1 AND shared_with_user_id = $2
+		)
+	`
+	
+	err := db.QueryRow(query, documentID, userID).Scan(&exists)
+	return exists, err
+}

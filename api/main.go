@@ -81,6 +81,10 @@ func main() {
 	http.HandlerFunc(handlers.DeleteDocument),
 	)).Methods("DELETE")
 
+	router.Handle("/api/documents/{id}/invite", middleware.AuthMiddleware(
+	http.HandlerFunc(handlers.InviteUserToDocument),
+	)).Methods("POST")
+
 	 // WebSocket route (auth is handled inside the handler via query param token)
      router.HandleFunc("/ws/{documentId}", handlers.WebSocketHandler)
 
