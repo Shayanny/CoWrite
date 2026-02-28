@@ -29,8 +29,16 @@ services:
       - ./api:/app
     environment:
       - REDIS_URL=redis://redis:6379
+      - DATABASE_URL=${DATABASE_URL}
+      - JWT_SECRET=${JWT_SECRET}
+      - SMTP_HOST=smtp.gmail.com
+      - SMTP_PORT=587
+      - SMTP_USER=${SMTP_USER}
+      - SMTP_PASS=${SMTP_PASS}
     depends_on:
       - redis
+    networks:
+      - default
 
 
   redis:
