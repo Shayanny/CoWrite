@@ -185,3 +185,32 @@ func IsDocumentSharedWithUser(db *sql.DB, documentID int, userID int) (bool, err
 	err := db.QueryRow(query, documentID, userID).Scan(&exists)
 	return exists, err
 }
+
+// GetSharedDocuments returns all documents shared with a user
+func GetSharedDocuments(db *sql.DB, userID int) ([]Document, error) {
+	query := `
+		SELECT d.id, d.title, d.content, d.owner_id, d.created_at, d.updated_at
+		FROM documents d
+		INNER JOIN document_shares ds ON d.id = ds.document_id
+		WHERE ds.shared_with_user_id = $1
+		ORDER BY d.updated_at DESC
+	`
+
+	rows, err := db.Query(query, userID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	var documents []Document
+	for rows.Next() {
+		var doc Document
+		err := rows.Scan(&doc.ID, &doc.Title, &doc.Content, &doc.OwnerID, &doc.CreatedAt, &doc.UpdatedAt)
+		if err != nil {
+			return nil, err
+		}
+		documents = append(documents, doc)
+	}
+
+	return documents, nil
+}

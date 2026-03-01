@@ -20,13 +20,13 @@ function Dashboard() {
   const loadDocuments = async () => {
     setLoading(true);
     const response = await documentService.getMyDocuments();
-    
+
     if (response.error) {
       setError(response.error);
     } else {
       setDocuments(response.data || []);
     }
-    
+
     setLoading(false);
   };
 
@@ -68,30 +68,30 @@ function Dashboard() {
   };
 
   // Helper function to strip HTML and get plain text preview
-const getPlainTextPreview = (htmlContent: string, maxLength: number = 100): string => {
-  // Remove HTML tags
-  const plainText = htmlContent.replace(/<[^>]*>/g, ' ');
-  
-  // Decode HTML entities (like &nbsp;)
-  const decoded = plainText
-    .replace(/&nbsp;/g, ' ')
-    .replace(/&amp;/g, '&')
-    .replace(/&lt;/g, '<')
-    .replace(/&gt;/g, '>')
-    .replace(/&quot;/g, '"');
-  
-  // Remove extra whitespace (multiple spaces, newlines, tabs)
-  const cleaned = decoded
-    .replace(/\s+/g, ' ')  // Replace multiple spaces/newlines with single space
-    .trim();
-  
-  // Truncate if too long
-  if (cleaned.length > maxLength) {
-    return cleaned.substring(0, maxLength) + '...';
-  }
-  
-  return cleaned || 'Empty document';
-};
+  const getPlainTextPreview = (htmlContent: string, maxLength: number = 100): string => {
+    // Remove HTML tags
+    const plainText = htmlContent.replace(/<[^>]*>/g, ' ');
+
+    // Decode HTML entities (like &nbsp;)
+    const decoded = plainText
+      .replace(/&nbsp;/g, ' ')
+      .replace(/&amp;/g, '&')
+      .replace(/&lt;/g, '<')
+      .replace(/&gt;/g, '>')
+      .replace(/&quot;/g, '"');
+
+    // Remove extra whitespace (multiple spaces, newlines, tabs)
+    const cleaned = decoded
+      .replace(/\s+/g, ' ')  // Replace multiple spaces/newlines with single space
+      .trim();
+
+    // Truncate if too long
+    if (cleaned.length > maxLength) {
+      return cleaned.substring(0, maxLength) + '...';
+    }
+
+    return cleaned || 'Empty document';
+  };
 
   return (
     <div className="dashboard">
@@ -106,8 +106,8 @@ const getPlainTextPreview = (htmlContent: string, maxLength: number = 100): stri
       <main className="dashboard-main">
         <div className="documents-header">
           <h2>My Documents</h2>
-          <button 
-            onClick={() => setShowCreateModal(true)} 
+          <button
+            onClick={() => setShowCreateModal(true)}
             className="btn-create"
           >
             + New Document
@@ -126,7 +126,14 @@ const getPlainTextPreview = (htmlContent: string, maxLength: number = 100): stri
         <div className="documents-grid">
           {documents.map((doc) => (
             <div key={doc.id} className="document-card">
-              <h3>{doc.title}</h3>
+              <div className="document-header">
+                <h3>{doc.title}</h3>
+                {doc.is_shared && (
+                  <span className="shared-badge" title="Shared with you">
+                    👥
+                  </span>
+                )}
+              </div>
               <p className="doc-preview">
                 {getPlainTextPreview(doc.content, 100) || 'Empty document'}
                 {doc.content.length > 100 && '...'}
@@ -135,22 +142,25 @@ const getPlainTextPreview = (htmlContent: string, maxLength: number = 100): stri
                 <span>Updated: {new Date(doc.updated_at).toLocaleDateString()}</span>
               </div>
               <div className="doc-actions">
-                <button 
+                <button
                   onClick={() => window.location.href = `/document/${doc.id}`}
                   className="btn-open"
                 >
                   Open
                 </button>
-                <button 
-                  onClick={() => handleDeleteDocument(doc.id)}
-                  className="btn-delete"
-                >
-                  Delete
-                </button>
+                {!doc.is_shared && (
+                  <button
+                    onClick={() => handleDeleteDocument(doc.id)}
+                    className="btn-delete"
+                  >
+                    Delete
+                  </button>
+                )}
               </div>
             </div>
           ))}
         </div>
+
       </main>
 
       {showCreateModal && (
@@ -171,15 +181,15 @@ const getPlainTextPreview = (htmlContent: string, maxLength: number = 100): stri
                 />
               </div>
               <div className="modal-actions">
-                <button 
-                  type="button" 
+                <button
+                  type="button"
                   onClick={() => setShowCreateModal(false)}
                   className="btn-cancel"
                 >
                   Cancel
                 </button>
-                <button 
-                  type="submit" 
+                <button
+                  type="submit"
                   className="btn-primary"
                   disabled={creating}
                 >

@@ -6,6 +6,7 @@ import (
 	"log"
 	"net/http"
 	"strconv"
+	"time"
 
 	"minidocs/api/config"
 	"minidocs/api/middleware"
@@ -30,6 +31,17 @@ type UpdateDocumentRequest struct {
 // ShareDocumentRequest represents the invite request
 type ShareDocumentRequest struct {
 	Email string `json:"email"`
+}
+
+// DocumentWithShareInfo includes whether document is shared
+type DocumentWithShareInfo struct {
+	ID        int       `json:"id"`
+	Title     string    `json:"title"`
+	Content   string    `json:"content"`
+	OwnerID   int       `json:"owner_id"`
+	CreatedAt time.Time `json:"created_at"`
+	UpdatedAt time.Time `json:"updated_at"`
+	IsShared  bool      `json:"is_shared"` // NEW FIELD
 }
 
 // CreateDocument handles document creation
@@ -68,24 +80,61 @@ func CreateDocument(w http.ResponseWriter, r *http.Request) {
 	json.NewEncoder(w).Encode(doc)
 }
 
-// GetMyDocuments returns all documents owned by the authenticated user
+// GetMyDocuments returns all documents owned by or shared with the authenticated user
 func GetMyDocuments(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 
 	// Get user from context
 	claims := r.Context().Value(middleware.UserContextKey).(*utils.Claims)
 
-	// Get documents from database
-	documents, err := models.GetDocumentsByOwner(config.DB, claims.UserID)
+	// Get owned documents
+	ownedDocs, err := models.GetDocumentsByOwner(config.DB, claims.UserID)
 	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
 		json.NewEncoder(w).Encode(ErrorResponse{Error: "Failed to retrieve documents"})
 		return
 	}
 
-	// Return documents (empty array if none found)
+	// Get shared documents
+	sharedDocs, err := models.GetSharedDocuments(config.DB, claims.UserID)
+	if err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		json.NewEncoder(w).Encode(ErrorResponse{Error: "Failed to retrieve shared documents"})
+		return
+	}
+
+	// Combine both lists with IsShared flag
+	var allDocs []DocumentWithShareInfo
+
+	// Add owned documents
+	for _, doc := range ownedDocs {
+		allDocs = append(allDocs, DocumentWithShareInfo{
+			ID:        doc.ID,
+			Title:     doc.Title,
+			Content:   doc.Content,
+			OwnerID:   doc.OwnerID,
+			CreatedAt: doc.CreatedAt,
+			UpdatedAt: doc.UpdatedAt,
+			IsShared:  false, // Not shared - user owns it
+		})
+	}
+
+	// Add shared documents
+	for _, doc := range sharedDocs {
+		allDocs = append(allDocs, DocumentWithShareInfo{
+			ID:        doc.ID,
+			Title:     doc.Title,
+			Content:   doc.Content,
+			OwnerID:   doc.OwnerID,
+			CreatedAt: doc.CreatedAt,
+			UpdatedAt: doc.UpdatedAt,
+			IsShared:  true, // This is a shared document
+		})
+	}
+
+	// Return combined list
 	w.WriteHeader(http.StatusOK)
-	json.NewEncoder(w).Encode(documents)
+	json.NewEncoder(w).Encode(allDocs)
 }
 
 // GetDocument returns a specific document by ID
@@ -95,7 +144,7 @@ func GetDocument(w http.ResponseWriter, r *http.Request) {
 	// Get document ID from URL
 	vars := mux.Vars(r)
 	idStr := vars["id"]
-	
+
 	id, err := strconv.Atoi(idStr)
 	if err != nil {
 		w.WriteHeader(http.StatusBadRequest)
