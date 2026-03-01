@@ -30,6 +30,11 @@ function Editor() {
     timestamp: Date;
   }>>([]);
 
+  const [showInviteModal, setShowInviteModal] = useState(false);
+  const [inviteEmail, setInviteEmail] = useState('');
+  const [inviteLoading, setInviteLoading] = useState(false);
+  const [inviteMessage, setInviteMessage] = useState('');
+
   // Reference for auto-save timer
   const autoSaveTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   // Load document when component mounts
@@ -232,6 +237,46 @@ function Editor() {
     }
   };
 
+  const handleInvite = async () => {
+    // Validate email
+    if (!inviteEmail || !inviteEmail.includes('@')) {
+      setInviteMessage('Please enter a valid email address');
+      return;
+    }
+
+    setInviteLoading(true);
+    setInviteMessage('');
+
+    try {
+      const response = await fetch(`http://localhost:8080/api/documents/${documentId}/invite`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${localStorage.getItem('token')}`
+        },
+        body: JSON.stringify({ email: inviteEmail })
+      });
+
+      const data = await response.json();
+
+      if (response.ok) {
+        setInviteMessage('✅ ' + data.message);
+        setInviteEmail('');
+        // Close modal after 2 seconds
+        setTimeout(() => {
+          setShowInviteModal(false);
+          setInviteMessage('');
+        }, 2000);
+      } else {
+        setInviteMessage('❌ ' + data.error);
+      }
+    } catch (error) {
+      setInviteMessage('❌ Failed to send invitation');
+    } finally {
+      setInviteLoading(false);
+    }
+  };
+
   const modules = {
     toolbar: [
       [{ 'header': [1, 2, 3, false] }],
@@ -309,7 +354,10 @@ function Editor() {
       <div className="chat-box">
         <div className="chat-header">
           <span>Activity</span>
-          <button className="btn-invite">+ Invite</button>
+          <button
+            className="btn-invite"
+            onClick={() => setShowInviteModal(true)}
+          >+ Invite</button>
         </div>
 
         {/* Show active users */}
@@ -353,6 +401,61 @@ function Editor() {
           <span className="unsaved-indicator"> • Unsaved changes</span>
         )}
       </footer>
+      {showInviteModal && (
+        <div className="modal-overlay" onClick={() => setShowInviteModal(false)}>
+          <div className="modal-content" onClick={(e) => e.stopPropagation()}>
+            <div className="modal-header">
+              <h3>Invite Collaborator</h3>
+              <button
+                className="modal-close"
+                onClick={() => setShowInviteModal(false)}
+              >
+                ×
+              </button>
+            </div>
+
+            <div className="modal-body">
+              <p className="modal-description">
+                Enter the email address of the person you want to invite.
+                They must have a CoWrite account.
+              </p>
+
+              <input
+                type="email"
+                placeholder="collaborator@email.com"
+                value={inviteEmail}
+                onChange={(e) => setInviteEmail(e.target.value)}
+                onKeyPress={(e) => e.key === 'Enter' && handleInvite()}
+                className="invite-input"
+                disabled={inviteLoading}
+              />
+
+              {inviteMessage && (
+                <p className={`invite-message ${inviteMessage.startsWith('✅') ? 'success' : 'error'}`}>
+                  {inviteMessage}
+                </p>
+              )}
+            </div>
+
+            <div className="modal-footer">
+              <button
+                className="btn-cancel"
+                onClick={() => setShowInviteModal(false)}
+                disabled={inviteLoading}
+              >
+                Cancel
+              </button>
+              <button
+                className="btn-send-invite"
+                onClick={handleInvite}
+                disabled={inviteLoading}
+              >
+                {inviteLoading ? 'Sending...' : 'Send Invitation'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

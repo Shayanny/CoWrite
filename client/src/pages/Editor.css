@@ -313,3 +313,154 @@
   color: #888;
   font-style: italic;
 }
+/* Modal Overlay */
+.modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.7);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+}
+
+/* Modal Content */
+.modal-content {
+  background: #1e1e1e;
+  border-radius: 8px;
+  width: 90%;
+  max-width: 500px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.5);
+}
+
+/* Modal Header */
+.modal-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 20px;
+  border-bottom: 1px solid #333;
+}
+
+.modal-header h3 {
+  margin: 0;
+  color: #fff;
+  font-size: 20px;
+}
+
+.modal-close {
+  background: none;
+  border: none;
+  color: #888;
+  font-size: 28px;
+  cursor: pointer;
+  padding: 0;
+  width: 30px;
+  height: 30px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: color 0.2s;
+}
+
+.modal-close:hover {
+  color: #fff;
+}
+
+/* Modal Body */
+.modal-body {
+  padding: 20px;
+}
+
+.modal-description {
+  color: #aaa;
+  margin-bottom: 15px;
+  font-size: 14px;
+}
+
+.invite-input {
+  width: 100%;
+  padding: 12px;
+  background: #2a2a2a;
+  border: 1px solid #444;
+  border-radius: 4px;
+  color: #fff;
+  font-size: 16px;
+  box-sizing: border-box;
+}
+
+.invite-input:focus {
+  outline: none;
+  border-color: #028090;
+}
+
+.invite-input:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.invite-message {
+  margin-top: 12px;
+  padding: 10px;
+  border-radius: 4px;
+  font-size: 14px;
+}
+
+.invite-message.success {
+  background: #1a4d2e;
+  color: #4ade80;
+  border: 1px solid #4ade80;
+}
+
+.invite-message.error {
+  background: #4d1a1a;
+  color: #f87171;
+  border: 1px solid #f87171;
+}
+
+/* Modal Footer */
+.modal-footer {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+  padding: 20px;
+  border-top: 1px solid #333;
+}
+
+.btn-cancel,
+.btn-send-invite {
+  padding: 10px 20px;
+  border-radius: 4px;
+  font-size: 14px;
+  cursor: pointer;
+  transition: all 0.2s;
+  border: none;
+}
+
+.btn-cancel {
+  background: #333;
+  color: #fff;
+}
+
+.btn-cancel:hover:not(:disabled) {
+  background: #444;
+}
+
+.btn-send-invite {
+  background: #028090;
+  color: #fff;
+  font-weight: 600;
+}
+
+.btn-send-invite:hover:not(:disabled) {
+  background: #026873;
+}
+
+.btn-cancel:disabled,
+.btn-send-invite:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}

@@ -95,8 +95,7 @@ func GetDocument(w http.ResponseWriter, r *http.Request) {
 	// Get document ID from URL
 	vars := mux.Vars(r)
 	idStr := vars["id"]
-
-	// Convert string to int
+	
 	id, err := strconv.Atoi(idStr)
 	if err != nil {
 		w.WriteHeader(http.StatusBadRequest)
@@ -112,9 +111,20 @@ func GetDocument(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	// Get authenticated user
 	claims := r.Context().Value(middleware.UserContextKey).(*utils.Claims)
 
-	if doc.OwnerID != claims.UserID {
+	// Check if user owns the document OR has it shared with them
+	isOwner := doc.OwnerID == claims.UserID
+	isShared, err := models.IsDocumentSharedWithUser(config.DB, id, claims.UserID)
+	if err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		json.NewEncoder(w).Encode(ErrorResponse{Error: "Database error"})
+		return
+	}
+
+	// User must be owner OR have document shared with them
+	if !isOwner && !isShared {
 		w.WriteHeader(http.StatusForbidden)
 		json.NewEncoder(w).Encode(ErrorResponse{Error: "You don't have permission to view this document"})
 		return
@@ -142,7 +152,7 @@ func UpdateDocument(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Check if document exists and user owns it
+	// Check if document exists
 	existingDoc, err := models.GetDocumentByID(config.DB, id)
 	if err != nil {
 		w.WriteHeader(http.StatusNotFound)
@@ -150,8 +160,17 @@ func UpdateDocument(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Check ownership
-	if existingDoc.OwnerID != claims.UserID {
+	// Check if user owns the document OR has it shared with them
+	isOwner := existingDoc.OwnerID == claims.UserID
+	isShared, err := models.IsDocumentSharedWithUser(config.DB, id, claims.UserID)
+	if err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		json.NewEncoder(w).Encode(ErrorResponse{Error: "Database error"})
+		return
+	}
+
+	// User must be owner OR have document shared with them to edit
+	if !isOwner && !isShared {
 		w.WriteHeader(http.StatusForbidden)
 		json.NewEncoder(w).Encode(ErrorResponse{Error: "You don't have permission to edit this document"})
 		return
