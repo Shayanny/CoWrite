@@ -4,6 +4,7 @@ import './Editor.css';
 import ReactQuill from 'react-quill';
 import 'react-quill/dist/quill.snow.css';
 import { wsService } from '../services/websocketService';
+import DiffMatchPatch from 'diff-match-patch';
 
 function Editor() {
   // Get document ID from URL
@@ -34,6 +35,9 @@ function Editor() {
   const [inviteEmail, setInviteEmail] = useState('');
   const [inviteLoading, setInviteLoading] = useState(false);
   const [inviteMessage, setInviteMessage] = useState('');
+
+  const dmp = useRef(new DiffMatchPatch());
+  const previousContent = useRef('');
 
   // Reference for auto-save timer
   const autoSaveTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -167,6 +171,7 @@ function Editor() {
       setDocument(response.data);
       setTitle(response.data.title);
       setContent(response.data.content);
+      previousContent.current = response.data.content;
       wsService.connect(documentId);
 
       setActiveUsers([currentUser.username]);
@@ -191,8 +196,19 @@ function Editor() {
 
     // Send update after 500ms of no typing
     syncTimerRef.current = setTimeout(() => {
-      wsService.send('edit', { content: value });
-    }, 500);  // Wait 500ms after user stops typing
+      // Calculate diff between previous and current content
+      const patches = dmp.current.patch_make(previousContent.current, value);
+      const patchText = dmp.current.patch_toText(patches);
+
+      // Send patches instead of full content
+      wsService.send('edit', {
+        patches: patchText,
+        fullContent: value  // Send full content as backup for now
+      });
+
+      // Update previous content for next diff
+      previousContent.current = value;
+    }, 500);
   };
 
   const handleSave = async (isAutoSave = false) => {
