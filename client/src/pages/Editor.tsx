@@ -21,6 +21,8 @@ function Editor() {
   const [error, setError] = useState('');
   const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
   const currentUser = JSON.parse(localStorage.getItem('user') || '{}');
+  console.log('👤 Full currentUser object:', currentUser);
+  console.log('👤 Keys in currentUser:', Object.keys(currentUser));
 
   const syncTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const [activeUsers, setActiveUsers] = useState<string[]>([]);
@@ -122,9 +124,45 @@ function Editor() {
     });
 
     const unsubEdit = wsService.on('edit', (message) => {
-      if (message.userId !== currentUser.id && message.documentId === documentId) {
-        const newContent = (message.payload as any).content;
-        setContent(newContent);
+      console.log(' Received edit message:', message);
+      console.log(' Message username:', message.username);
+      console.log(' Current username:', currentUser.username);
+
+      // CHANGE: Compare usernames instead of IDs
+      if (message.username !== currentUser.username && message.documentId === documentId) {
+        console.log(' Applying edit from other user');
+        console.log(' Current editor content:', content);
+
+        const payload = message.payload as any;
+
+        if (payload.patches) {
+          console.log(' Applying patches:', payload.patches);
+          try {
+            const patches = dmp.current.patch_fromText(payload.patches);
+            const [newContent] = dmp.current.patch_apply(patches, content);
+
+            console.log(' Patch applied successfully');
+            console.log(' Old content:', content);
+            console.log(' New content:', newContent);
+
+            if (newContent !== content) {
+              setContent(newContent);
+              previousContent.current = newContent;
+            }
+
+          } catch (error) {
+            console.error(' Failed to apply patches:', error);
+            if (payload.fullContent) {
+              setContent(payload.fullContent);
+              previousContent.current = payload.fullContent;
+            }
+          }
+        } else if (payload.fullContent) {
+          setContent(payload.fullContent);
+          previousContent.current = payload.fullContent;
+        }
+      } else {
+        console.log(' Skipping - this is my own edit');
       }
     });
 
@@ -186,27 +224,30 @@ function Editor() {
   };
 
   const handleContentChange = (value: string) => {
+    console.log('🔵 Content changed:', value);
+    console.log('🔵 Previous:', previousContent.current);
+
     setContent(value);
     setHasUnsavedChanges(true);
 
-    // Clear existing sync timer
     if (syncTimerRef.current) {
       clearTimeout(syncTimerRef.current);
     }
 
-    // Send update after 500ms of no typing
     syncTimerRef.current = setTimeout(() => {
-      // Calculate diff between previous and current content
+      console.log(' Sending after debounce');
+      console.log(' Calculating diff...');
+
       const patches = dmp.current.patch_make(previousContent.current, value);
       const patchText = dmp.current.patch_toText(patches);
 
-      // Send patches instead of full content
+      console.log('✅ Patches:', patchText);
+
       wsService.send('edit', {
         patches: patchText,
-        fullContent: value  // Send full content as backup for now
+        fullContent: value
       });
 
-      // Update previous content for next diff
       previousContent.current = value;
     }, 500);
   };

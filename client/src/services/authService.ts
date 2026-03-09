@@ -41,9 +41,10 @@ class AuthService {
     if (response.data) {
       // Store token in localStorage
       localStorage.setItem('token', response.data.token);
+      const userData = response.data;
       localStorage.setItem('user', JSON.stringify({
-        username: response.data.username,
-        email: response.data.email,
+        username: userData.username,
+        email: userData.email,
       }));
     }
 
