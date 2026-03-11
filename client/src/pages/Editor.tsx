@@ -38,8 +38,16 @@ function Editor() {
   const [inviteLoading, setInviteLoading] = useState(false);
   const [inviteMessage, setInviteMessage] = useState('');
 
+  const [userCursors, setUserCursors] = useState<Record<string, { position: number, length: number, color: string }>>({});
+
   const dmp = useRef(new DiffMatchPatch());
   const previousContent = useRef('');
+
+  const cursorColors = ['#3b82f6', '#ef4444', '#10b981', '#f59e0b', '#8b5cf6'];
+  const getUserColor = (username: string) => {
+    const hash = username.split('').reduce((acc, char) => acc + char.charCodeAt(0), 0);
+    return cursorColors[hash % cursorColors.length];
+  };
 
   // Reference for auto-save timer
   const autoSaveTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -83,6 +91,33 @@ function Editor() {
           return prev;
         });
       }
+
+    });
+
+    const unsubCursor = wsService.on('cursor', (message) => {
+      if (message.username !== currentUser.username && message.documentId === documentId) {
+        const payload = message.payload as { position: number; length: number };
+
+        console.log(` ${message.username} cursor at position ${payload.position}`);
+
+        setUserCursors(prev => ({
+          ...prev,
+          [message.username]: {
+            position: payload.position,
+            length: payload.length,
+            color: getUserColor(message.username)
+          }
+        }));
+
+        // Remove cursor after 3 seconds of inactivity
+        setTimeout(() => {
+          setUserCursors(prev => {
+            const next = { ...prev };
+            delete next[message.username];
+            return next;
+          });
+        }, 3000);
+      }
     });
 
     const unsubMembers = wsService.on('members', (message) => {
@@ -125,41 +160,27 @@ function Editor() {
 
     const unsubEdit = wsService.on('edit', (message) => {
       console.log(' Received edit message:', message);
-      console.log(' Message username:', message.username);
-      console.log(' Current username:', currentUser.username);
+      console.log(' From user:', message.username);
+      console.log(' Current user:', currentUser.username);
 
-      // CHANGE: Compare usernames instead of IDs
+      // Skip if this is our own edit
       if (message.username !== currentUser.username && message.documentId === documentId) {
         console.log(' Applying edit from other user');
-        console.log(' Current editor content:', content);
 
         const payload = message.payload as any;
 
-        if (payload.patches) {
-          console.log(' Applying patches:', payload.patches);
-          try {
-            const patches = dmp.current.patch_fromText(payload.patches);
-            const [newContent] = dmp.current.patch_apply(patches, content);
+        if (payload.fullContent) {
+          console.log(' Updating content');
+          console.log(' Old content length:', content.length);
+          console.log(' New content length:', payload.fullContent.length);
 
-            console.log(' Patch applied successfully');
-            console.log(' Old content:', content);
-            console.log(' New content:', newContent);
-
-            if (newContent !== content) {
-              setContent(newContent);
-              previousContent.current = newContent;
-            }
-
-          } catch (error) {
-            console.error(' Failed to apply patches:', error);
-            if (payload.fullContent) {
-              setContent(payload.fullContent);
-              previousContent.current = payload.fullContent;
-            }
-          }
-        } else if (payload.fullContent) {
+          // Update content
           setContent(payload.fullContent);
           previousContent.current = payload.fullContent;
+
+          console.log(' Content updated in state');
+        } else {
+          console.log(' No fullContent in payload');
         }
       } else {
         console.log(' Skipping - this is my own edit');
@@ -170,7 +191,9 @@ function Editor() {
     return () => {
       setChatMessages([]);
       setActiveUsers([]);
+      setUserCursors({});
       unsubJoin();
+      unsubCursor();
       unsubLeave();
       unsubEdit();
       unsubMembers();
@@ -224,8 +247,8 @@ function Editor() {
   };
 
   const handleContentChange = (value: string) => {
-    console.log('🔵 Content changed:', value);
-    console.log('🔵 Previous:', previousContent.current);
+    console.log(' Content changed:', value);
+    console.log(' Previous:', previousContent.current);
 
     setContent(value);
     setHasUnsavedChanges(true);
@@ -241,7 +264,7 @@ function Editor() {
       const patches = dmp.current.patch_make(previousContent.current, value);
       const patchText = dmp.current.patch_toText(patches);
 
-      console.log('✅ Patches:', patchText);
+      console.log(' Patches:', patchText);
 
       wsService.send('edit', {
         patches: patchText,
@@ -250,6 +273,15 @@ function Editor() {
 
       previousContent.current = value;
     }, 500);
+  };
+
+  const handleSelectionChange = (range: any) => {
+    if (range) {
+      wsService.send('cursor', {
+        position: range.index,
+        length: range.length
+      });
+    }
   };
 
   const handleSave = async (isAutoSave = false) => {
@@ -401,6 +433,7 @@ function Editor() {
             theme="snow"
             value={content}
             onChange={handleContentChange}
+            onChangeSelection={handleSelectionChange}
             modules={modules}
             formats={formats}
             placeholder="Start writing..."
@@ -429,6 +462,26 @@ function Editor() {
                   <span className="user-indicator">🟢</span>
                   <span className="username">{username}</span>
                   {username === currentUser.username && <span className="you-badge">(you)</span>}
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {Object.keys(userCursors).length > 0 && (
+          <div className="cursor-activity">
+            <div className="cursor-activity-header">
+              Active Cursors
+            </div>
+            <div className="cursor-list">
+              {Object.entries(userCursors).map(([username, cursor]) => (
+                <div key={username} className="cursor-item">
+                  <span
+                    className="cursor-color-dot"
+                    style={{ backgroundColor: cursor.color }}
+                  ></span>
+                  <span className="cursor-username">{username}</span>
+                  <span className="cursor-position">@{cursor.position}</span>
                 </div>
               ))}
             </div>

@@ -464,3 +464,54 @@
   opacity: 0.5;
   cursor: not-allowed;
 }
+
+/* Cursor Activity Section */
+.cursor-activity {
+  margin-bottom: 15px;
+  padding: 10px;
+  background: #2a2a2a;
+  border-radius: 6px;
+}
+
+.cursor-activity-header {
+  font-size: 12px;
+  font-weight: 600;
+  color: #888;
+  margin-bottom: 8px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.cursor-list {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.cursor-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px;
+  background: #1e1e1e;
+  border-radius: 4px;
+  font-size: 13px;
+}
+
+.cursor-color-dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.cursor-username {
+  color: #fff;
+  flex: 1;
+}
+
+.cursor-position {
+  color: #888;
+  font-size: 11px;
+  font-family: 'Courier New', monospace;
+}

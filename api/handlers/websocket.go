@@ -6,9 +6,13 @@ import (
 	"net/http"
 	"strconv"
 	"sync"
+	"time"
 
-	"minidocs/api/utils"
-
+	"minidocs/api/config"
+    "minidocs/api/models"
+    "minidocs/api/utils"
+    
+	dmp "github.com/sergi/go-diff/diffmatchpatch"  
 	"github.com/gorilla/mux"
 	"github.com/gorilla/websocket"
 )
@@ -31,6 +35,8 @@ type Client struct {
 	documentID int
 	userID     int
 	username   string
+	lastContent string
+	lastDBSave time.Time // tracks last time we saved to DB for this client
 }
 
 // Room represents all clients currently editing the same document.
@@ -173,6 +179,8 @@ func WebSocketHandler(w http.ResponseWriter, r *http.Request) {
 		documentID: documentID,
 		userID:     claims.UserID,
 		username:   claims.Username,
+		lastContent: "",         
+		lastDBSave:  time.Now(),
 	}
 
 	room := getOrCreateRoom(documentID)
@@ -236,7 +244,7 @@ func readPump(client *Client, room *Room) {
 			if websocket.IsUnexpectedCloseError(err, websocket.CloseNormalClosure, websocket.CloseGoingAway) {
 				log.Printf("WebSocket read error for user %d: %v", client.userID, err)
 			}
-			break // exit the loop → triggers the deferred cleanup
+			break // exit the loop , triggers the deferred cleanup
 		}
 
 		// Parse just enough to stamp the sender info onto the message
@@ -250,6 +258,98 @@ func readPump(client *Client, room *Room) {
 		msg.UserID = client.userID
 		msg.Username = client.username
 		msg.DocumentID = client.documentID
+
+		// DMP LOGIC
+		if msg.Type == "edit" {
+			// Get current document from database
+			doc, err := models.GetDocumentByID(config.DB, msg.DocumentID)
+			if err != nil {
+				log.Printf("Error getting document: %v", err)
+				continue
+			}
+
+			// Parse payload
+			var payload map[string]interface{}
+			if err := json.Unmarshal(msg.Payload, &payload); err != nil {
+				log.Printf("Error parsing payload: %v", err)
+				continue
+			}
+
+			newContent := doc.Content // Start with current content
+
+			// Try to apply patches if provided
+			if patchText, ok := payload["patches"].(string); ok && patchText != "" {
+				log.Printf("Applying patches from user %s", client.username)
+				
+				dmpInstance := dmp.New()
+				patches, err := dmpInstance.PatchFromText(patchText)
+				
+				if err != nil {
+					log.Printf("Error parsing patches: %v", err)
+					// Fallback to full content
+					if fullContent, ok := payload["fullContent"].(string); ok {
+						newContent = fullContent
+					}
+				} else {
+					// Apply patches to server's current content
+					result, applied := dmpInstance.PatchApply(patches, doc.Content)
+					
+					// Check if all patches applied successfully
+					allApplied := true
+					for _, success := range applied {
+						if !success {
+							allApplied = false
+							break
+						}
+					}
+					
+					if allApplied {
+						newContent = result
+						log.Printf(" Patches applied successfully. Old length: %d, New length: %d", 
+							len(doc.Content), len(newContent))
+					} else {
+						log.Printf(" Some patches failed, using fallback")
+						// Fallback to full content
+						if fullContent, ok := payload["fullContent"].(string); ok {
+							newContent = fullContent
+						}
+					}
+				}
+			} else if fullContent, ok := payload["fullContent"].(string); ok {
+				// No patches, just use full content
+				newContent = fullContent
+				log.Printf("Using full content from user %s", client.username)
+			}
+
+			// Update document in database
+			//_, err = models.UpdateDocument(config.DB, msg.DocumentID, doc.Title, newContent)
+			//if err != nil {
+			//	log.Printf("Error updating document: %v", err)
+			//}
+
+			if shouldSaveToDatabase(client.lastDBSave) {
+             _, err = models.UpdateDocument(config.DB, msg.DocumentID, doc.Title, newContent)
+            if err != nil {
+             log.Printf("Error updating document: %v", err)
+              } else {
+              client.lastDBSave = time.Now()
+   				  log.Printf("Document %d saved to database", msg.DocumentID)}
+			 }
+
+			// Create new payload with updated content
+			broadcastPayload := map[string]interface{}{
+				"fullContent": newContent,
+			}
+			broadcastPayloadJSON, _ := json.Marshal(broadcastPayload)
+			msg.Payload = json.RawMessage(broadcastPayloadJSON)
+		}
+		if msg.Type == "cursor" {
+			// Cursor messages don't need database save
+			// Just broadcast position to other users
+			// msg already has sanitized username and userId
+			log.Printf(" Cursor update from %s: position in payload", client.username)
+		}
+		// === END DMP LOGIC ===
 
 		// Re-marshal with the corrected fields
 		sanitised, err := json.Marshal(msg)
@@ -275,6 +375,12 @@ func writePump(client *Client) {
 			break
 		}
 	}
+}
+
+// shouldSaveToDatabase checks if enough time has passed since last save
+// Returns true if more than 5 seconds have elapsed
+func shouldSaveToDatabase(lastSave time.Time) bool {
+	return time.Since(lastSave) > 5*time.Second
 }
 
 // mustMarshal is a helper that marshals data to JSON, panicking on error.
