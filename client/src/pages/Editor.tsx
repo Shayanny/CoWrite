@@ -38,16 +38,16 @@ function Editor() {
   const [inviteLoading, setInviteLoading] = useState(false);
   const [inviteMessage, setInviteMessage] = useState('');
 
-  const [userCursors, setUserCursors] = useState<Record<string, { position: number, length: number, color: string }>>({});
+  //const [userCursors, setUserCursors] = useState<Record<string, { position: number, length: number, color: string }>>({});
 
   const dmp = useRef(new DiffMatchPatch());
   const previousContent = useRef('');
 
-  const cursorColors = ['#3b82f6', '#ef4444', '#10b981', '#f59e0b', '#8b5cf6'];
-  const getUserColor = (username: string) => {
-    const hash = username.split('').reduce((acc, char) => acc + char.charCodeAt(0), 0);
-    return cursorColors[hash % cursorColors.length];
-  };
+  //const cursorColors = ['#3b82f6', '#ef4444', '#10b981', '#f59e0b', '#8b5cf6'];
+  //const getUserColor = (username: string) => {
+ //   const hash = username.split('').reduce((acc, char) => acc + char.charCodeAt(0), 0);
+  //  return cursorColors[hash % cursorColors.length];
+ // };
 
   // Reference for auto-save timer
   const autoSaveTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -94,31 +94,6 @@ function Editor() {
 
     });
 
-    const unsubCursor = wsService.on('cursor', (message) => {
-      if (message.username !== currentUser.username && message.documentId === documentId) {
-        const payload = message.payload as { position: number; length: number };
-
-        console.log(` ${message.username} cursor at position ${payload.position}`);
-
-        setUserCursors(prev => ({
-          ...prev,
-          [message.username]: {
-            position: payload.position,
-            length: payload.length,
-            color: getUserColor(message.username)
-          }
-        }));
-
-        // Remove cursor after 3 seconds of inactivity
-        setTimeout(() => {
-          setUserCursors(prev => {
-            const next = { ...prev };
-            delete next[message.username];
-            return next;
-          });
-        }, 3000);
-      }
-    });
 
     const unsubMembers = wsService.on('members', (message) => {
       if (message.documentId === documentId) {
@@ -191,9 +166,7 @@ function Editor() {
     return () => {
       setChatMessages([]);
       setActiveUsers([]);
-      setUserCursors({});
       unsubJoin();
-      unsubCursor();
       unsubLeave();
       unsubEdit();
       unsubMembers();
@@ -208,10 +181,10 @@ function Editor() {
         clearTimeout(autoSaveTimerRef.current);
       }
 
-      // Set new timer for 3 seconds
+      // Set new timer for 5 seconds
       autoSaveTimerRef.current = setTimeout(() => {
         handleSave(true); // true = auto-save
-      }, 3000);
+      }, 5000);
     }
 
     // Cleanup timer on unmount
@@ -305,7 +278,7 @@ function Editor() {
       setHasUnsavedChanges(false); // Reset unsaved changes flag
       setSaveStatus('Saved');
       // Clear "Saved" message after 2 seconds
-      setTimeout(() => setSaveStatus(''), 2000);
+      setTimeout(() => setSaveStatus(''), 3000);
     }
   };
 
@@ -468,25 +441,6 @@ function Editor() {
           </div>
         )}
 
-        {Object.keys(userCursors).length > 0 && (
-          <div className="cursor-activity">
-            <div className="cursor-activity-header">
-              Active Cursors
-            </div>
-            <div className="cursor-list">
-              {Object.entries(userCursors).map(([username, cursor]) => (
-                <div key={username} className="cursor-item">
-                  <span
-                    className="cursor-color-dot"
-                    style={{ backgroundColor: cursor.color }}
-                  ></span>
-                  <span className="cursor-username">{username}</span>
-                  <span className="cursor-position">@{cursor.position}</span>
-                </div>
-              ))}
-            </div>
-          </div>
-        )}
 
         {/* Activity feed */}
         <div className="chat-messages">

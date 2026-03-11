@@ -322,19 +322,19 @@ func readPump(client *Client, room *Room) {
 			}
 
 			// Update document in database
-			//_, err = models.UpdateDocument(config.DB, msg.DocumentID, doc.Title, newContent)
-			//if err != nil {
-			//	log.Printf("Error updating document: %v", err)
-			//}
+			_, err = models.UpdateDocument(config.DB, msg.DocumentID, doc.Title, newContent)
+			if err != nil {
+				log.Printf("Error updating document: %v", err)
+			}
 
-			if shouldSaveToDatabase(client.lastDBSave) {
-             _, err = models.UpdateDocument(config.DB, msg.DocumentID, doc.Title, newContent)
-            if err != nil {
-             log.Printf("Error updating document: %v", err)
-              } else {
-              client.lastDBSave = time.Now()
-   				  log.Printf("Document %d saved to database", msg.DocumentID)}
-			 }
+			//if shouldSaveToDatabase(client.lastDBSave) {
+           //  _, err = models.UpdateDocument(config.DB, msg.DocumentID, doc.Title, newContent)
+            //if err != nil {
+            // log.Printf("Error updating document: %v", err)
+            //  } else {
+            //  client.lastDBSave = time.Now()
+   			//	  log.Printf("Document %d saved to database", msg.DocumentID)}
+			 //}
 
 			// Create new payload with updated content
 			broadcastPayload := map[string]interface{}{
