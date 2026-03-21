@@ -343,6 +343,7 @@ func readPump(client *Client, room *Room) {
 			// Create new payload with updated content
 			broadcastPayload := map[string]interface{}{
 				"fullContent": newContent,
+				"sentAt":      payload["sentAt"],
 			}
 			broadcastPayloadJSON, _ := json.Marshal(broadcastPayload)
 			msg.Payload = json.RawMessage(broadcastPayloadJSON)

@@ -256,7 +256,7 @@ function Editor() {
       });
 
       previousContent.current = value;
-    }, 500);
+    }, 300);
   };
 
   const handleSelectionChange = (range: any) => {
