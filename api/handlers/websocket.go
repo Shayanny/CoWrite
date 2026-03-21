@@ -9,12 +9,12 @@ import (
 	"time"
 
 	"minidocs/api/config"
-    "minidocs/api/models"
-    "minidocs/api/utils"
-    
-	dmp "github.com/sergi/go-diff/diffmatchpatch"  
+	"minidocs/api/models"
+	"minidocs/api/utils"
+
 	"github.com/gorilla/mux"
 	"github.com/gorilla/websocket"
+	dmp "github.com/sergi/go-diff/diffmatchpatch"
 )
 
 // upgrader upgrades an HTTP connection to a WebSocket connection.
@@ -30,13 +30,13 @@ var upgrader = websocket.Upgrader{
 
 // Client represents a single WebSocket connection (one user in one document).
 type Client struct {
-	conn       *websocket.Conn
-	send       chan []byte // buffered channel of outgoing messages
-	documentID int
-	userID     int
-	username   string
+	conn        *websocket.Conn
+	send        chan []byte // buffered channel of outgoing messages
+	documentID  int
+	userID      int
+	username    string
 	lastContent string
-	lastDBSave time.Time // tracks last time we saved to DB for this client
+	lastDBSave  time.Time // tracks last time we saved to DB for this client
 }
 
 // Room represents all clients currently editing the same document.
@@ -174,12 +174,12 @@ func WebSocketHandler(w http.ResponseWriter, r *http.Request) {
 
 	// 4. Create the Client and register it in the room
 	client := &Client{
-		conn:       conn,
-		send:       make(chan []byte, 64), // 64-message buffer before we consider the client stalled
-		documentID: documentID,
-		userID:     claims.UserID,
-		username:   claims.Username,
-		lastContent: "",         
+		conn:        conn,
+		send:        make(chan []byte, 64), // 64-message buffer before we consider the client stalled
+		documentID:  documentID,
+		userID:      claims.UserID,
+		username:    claims.Username,
+		lastContent: "",
 		lastDBSave:  time.Now(),
 	}
 
@@ -280,10 +280,10 @@ func readPump(client *Client, room *Room) {
 			// Try to apply patches if provided
 			if patchText, ok := payload["patches"].(string); ok && patchText != "" {
 				log.Printf("Applying patches from user %s", client.username)
-				
+
 				dmpInstance := dmp.New()
 				patches, err := dmpInstance.PatchFromText(patchText)
-				
+
 				if err != nil {
 					log.Printf("Error parsing patches: %v", err)
 					// Fallback to full content
@@ -293,7 +293,11 @@ func readPump(client *Client, room *Room) {
 				} else {
 					// Apply patches to server's current content
 					result, applied := dmpInstance.PatchApply(patches, doc.Content)
-					
+					start := time.Now()
+
+					elapsed := time.Since(start)
+					log.Printf("[DMP] Patch apply took: %v | patch size: %d bytes | content size: %d bytes",
+						elapsed, len(patchText), len(doc.Content))
 					// Check if all patches applied successfully
 					allApplied := true
 					for _, success := range applied {
@@ -302,10 +306,10 @@ func readPump(client *Client, room *Room) {
 							break
 						}
 					}
-					
+
 					if allApplied {
 						newContent = result
-						log.Printf(" Patches applied successfully. Old length: %d, New length: %d", 
+						log.Printf(" Patches applied successfully. Old length: %d, New length: %d",
 							len(doc.Content), len(newContent))
 					} else {
 						log.Printf(" Some patches failed, using fallback")
@@ -328,13 +332,13 @@ func readPump(client *Client, room *Room) {
 			}
 
 			//if shouldSaveToDatabase(client.lastDBSave) {
-           //  _, err = models.UpdateDocument(config.DB, msg.DocumentID, doc.Title, newContent)
-            //if err != nil {
-            // log.Printf("Error updating document: %v", err)
-            //  } else {
-            //  client.lastDBSave = time.Now()
-   			//	  log.Printf("Document %d saved to database", msg.DocumentID)}
-			 //}
+			//  _, err = models.UpdateDocument(config.DB, msg.DocumentID, doc.Title, newContent)
+			//if err != nil {
+			// log.Printf("Error updating document: %v", err)
+			//  } else {
+			//  client.lastDBSave = time.Now()
+			//	  log.Printf("Document %d saved to database", msg.DocumentID)}
+			//}
 
 			// Create new payload with updated content
 			broadcastPayload := map[string]interface{}{

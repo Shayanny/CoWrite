@@ -45,9 +45,9 @@ function Editor() {
 
   //const cursorColors = ['#3b82f6', '#ef4444', '#10b981', '#f59e0b', '#8b5cf6'];
   //const getUserColor = (username: string) => {
- //   const hash = username.split('').reduce((acc, char) => acc + char.charCodeAt(0), 0);
+  //   const hash = username.split('').reduce((acc, char) => acc + char.charCodeAt(0), 0);
   //  return cursorColors[hash % cursorColors.length];
- // };
+  // };
 
   // Reference for auto-save timer
   const autoSaveTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -149,6 +149,11 @@ function Editor() {
           console.log(' Old content length:', content.length);
           console.log(' New content length:', payload.fullContent.length);
 
+          const receiveTime = performance.now();
+          if (payload.sentAt) {
+            console.log(`[DMP] Round-trip latency: ${(receiveTime - payload.sentAt).toFixed(2)}ms`);
+          }
+
           // Update content
           setContent(payload.fullContent);
           previousContent.current = payload.fullContent;
@@ -234,14 +239,20 @@ function Editor() {
       console.log(' Sending after debounce');
       console.log(' Calculating diff...');
 
+      const patchStart = performance.now();
       const patches = dmp.current.patch_make(previousContent.current, value);
       const patchText = dmp.current.patch_toText(patches);
+      const patchEnd = performance.now();
 
+      console.log(`[DMP] Patch generation took: ${(patchEnd - patchStart).toFixed(2)}ms`);
+      console.log(`[DMP] Patch size: ${patchText.length} bytes vs full content: ${value.length} bytes`);
       console.log(' Patches:', patchText);
 
+      const sendTime = performance.now();
       wsService.send('edit', {
         patches: patchText,
-        fullContent: value
+        fullContent: value,
+        sentAt: sendTime
       });
 
       previousContent.current = value;
