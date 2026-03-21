@@ -29,6 +29,9 @@ func main() {
 	config.InitDB()
 	defer config.DB.Close()
 
+	// Initialize Redis connection
+	config.InitRedis()
+
 	// Create router
 	router := mux.NewRouter()
 

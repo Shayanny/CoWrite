@@ -15,6 +15,7 @@ import (
 	"github.com/gorilla/mux"
 	"github.com/gorilla/websocket"
 	dmp "github.com/sergi/go-diff/diffmatchpatch"
+	"fmt"
 )
 
 // upgrader upgrades an HTTP connection to a WebSocket connection.
@@ -396,4 +397,39 @@ func mustMarshal(v interface{}) []byte {
 		panic(err)
 	}
 	return data
+}
+
+// getDocumentContent gets content from Redis if available, falls back to PostgreSQL
+func getDocumentContent(documentID int) (string, string, error) {
+    key := fmt.Sprintf("doc:%d:content", documentID)
+    
+    // Try Redis first
+    content, err := config.RDB.Get(config.Ctx, key).Result()
+    if err == nil {
+        log.Printf("[Redis] Cache hit for document %d", documentID)
+        return content, "", nil
+    }
+
+    // Redis miss - load from PostgreSQL
+    log.Printf("[Redis] Cache miss for document %d, loading from PostgreSQL", documentID)
+    doc, err := models.GetDocumentByID(config.DB, documentID)
+    if err != nil {
+        return "", "", err
+    }
+
+    // Store in Redis for next time
+    config.RDB.Set(config.Ctx, key, doc.Content, 24*time.Hour)
+    return doc.Content, doc.Title, nil
+}
+
+// saveDocumentContent saves content to Redis and PostgreSQL
+func saveDocumentContent(documentID int, title, content string) error {
+    key := fmt.Sprintf("doc:%d:content", documentID)
+    
+    // Always write to Redis
+    config.RDB.Set(config.Ctx, key, content, 24*time.Hour)
+    
+    // Also write to PostgreSQL
+    _, err := models.UpdateDocument(config.DB, documentID, title, content)
+    return err
 }
