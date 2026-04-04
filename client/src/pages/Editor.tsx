@@ -366,10 +366,19 @@ function Editor() {
     setChatInput('');
   };
 
-  const getWordCount = (htmlContent: string): { words: number, chars: number } => {
-    const plainText = htmlContent.replace(/<[^>]*>/g, '').replace(/&nbsp;/g, ' ').trim();
-    const words = plainText === '' ? 0 : plainText.split(/\s+/).filter(w => w.length > 0).length;
-    const chars = plainText.length;
+  const getWordCount = (htmlContent: string, titleText: string = ''): { words: number, chars: number } => {
+    const plainText = htmlContent
+      .replace(/<[^>]*>/g, ' ')  // replace tags with space not nothing
+      .replace(/&nbsp;/g, ' ')
+      .replace(/&amp;/g, '&')
+      .replace(/&lt;/g, '<')
+      .replace(/&gt;/g, '>')
+      .replace(/\s+/g, ' ')  // collapse multiple spaces
+      .trim();
+
+    const combined = (titleText + ' ' + plainText).trim();
+    const words = combined === '' ? 0 : combined.split(/\s+/).filter(w => w.length > 0).length;
+    const chars = combined.replace(/\s/g, '').length; // chars without spaces
     return { words, chars };
   };
 
@@ -516,11 +525,13 @@ function Editor() {
           Last updated: {document ? new Date(document.updated_at).toLocaleString() : 'Never'}
         </span>
         <span className="word-count">
-          {getWordCount(content).words} words · {getWordCount(content).chars} chars
+          {getWordCount(content, title).words} words · {getWordCount(content, title).chars} chars
         </span>
-        {hasUnsavedChanges && !saving && (
-          <span className="unsaved-indicator"> • Unsaved changes</span>
-        )}
+        <span className="footer-right">
+          {hasUnsavedChanges && !saving && (
+            <span className="unsaved-indicator">• Unsaved changes</span>
+          )}
+        </span>
       </footer>
       {showInviteModal && (
         <div className="modal-overlay" onClick={() => setShowInviteModal(false)}>
