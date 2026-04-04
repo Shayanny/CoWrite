@@ -40,6 +40,7 @@ function Editor() {
   const [inviteMessage, setInviteMessage] = useState('');
   const [copied, setCopied] = useState(false);
 
+
   //const [userCursors, setUserCursors] = useState<Record<string, { position: number, length: number, color: string }>>({});
 
   const dmp = useRef(new DiffMatchPatch());
@@ -365,6 +366,14 @@ function Editor() {
     setChatInput('');
   };
 
+  const getWordCount = (htmlContent: string): { words: number, chars: number } => {
+    const plainText = htmlContent.replace(/<[^>]*>/g, '').replace(/&nbsp;/g, ' ').trim();
+    const words = plainText === '' ? 0 : plainText.split(/\s+/).filter(w => w.length > 0).length;
+    const chars = plainText.length;
+    return { words, chars };
+  };
+
+
   const modules = {
     toolbar: [
       [{ 'header': [1, 2, 3, false] }],
@@ -505,6 +514,9 @@ function Editor() {
       <footer className="editor-footer">
         <span className="doc-info">
           Last updated: {document ? new Date(document.updated_at).toLocaleString() : 'Never'}
+        </span>
+        <span className="word-count">
+          {getWordCount(content).words} words · {getWordCount(content).chars} chars
         </span>
         {hasUnsavedChanges && !saving && (
           <span className="unsaved-indicator"> • Unsaved changes</span>

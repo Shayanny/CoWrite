@@ -546,3 +546,8 @@
 .chat-msg {
   color: #e0e0e0;
 }
+
+.word-count {
+  color: #888;
+  font-size: 13px;
+}
