@@ -28,10 +28,13 @@ function Editor() {
   const [activeUsers, setActiveUsers] = useState<string[]>([]);
 
   const [chatMessages, setChatMessages] = useState<Array<{
-    type: 'join' | 'leave';
+    type: 'join' | 'leave' | 'chat';
     username: string;
     timestamp: Date;
+    text?: string; // Only for chat messages
   }>>([]);
+
+  const [chatInput, setChatInput] = useState('');
 
   const [showInviteModal, setShowInviteModal] = useState(false);
   const [inviteEmail, setInviteEmail] = useState('');
@@ -55,6 +58,7 @@ function Editor() {
   useEffect(() => {
     loadDocument();
   }, []);
+
 
   // Set up WebSocket listeners once on mount
   useEffect(() => {
@@ -167,6 +171,22 @@ function Editor() {
       }
     });
 
+    const unsubChat = wsService.on('chat', (message) => {
+      if (message.documentId === documentId) {
+        const payload = message.payload as { text: string };
+        setChatMessages(prev => {
+          const newMessages = [...prev, {
+            type: 'chat' as const,
+            username: message.username,
+            timestamp: new Date(),
+            text: payload.text
+          }];
+          return newMessages.slice(-20);
+        });
+      }
+    });
+
+
     // Cleanup all subscriptions when component unmounts
     return () => {
       setChatMessages([]);
@@ -175,6 +195,7 @@ function Editor() {
       unsubLeave();
       unsubEdit();
       unsubMembers();
+      unsubChat();
       wsService.disconnect();
     };
   }, []); // Empty array = runs once on mount, cleanup on unmount
@@ -350,6 +371,12 @@ function Editor() {
     }
   };
 
+  const sendChatMessage = () => {
+    if (!chatInput.trim()) return;
+    wsService.send('chat', { text: chatInput });
+    setChatInput('');
+  };
+
   const modules = {
     toolbar: [
       [{ 'header': [1, 2, 3, false] }],
@@ -457,16 +484,35 @@ function Editor() {
         <div className="chat-messages">
           {chatMessages.map((msg, idx) => (
             <div key={idx} className="chat-message">
-              <span className={msg.type === 'join' ? 'join-msg' : 'leave-msg'}>
-                {msg.type === 'join' ? '🟢' : '🔴'} {msg.username} {msg.type === 'join' ? 'joined' : 'left'}
-              </span>
+              {msg.type === 'chat' ? (
+                <span className="chat-msg">
+                  <strong>{msg.username}:</strong> {msg.text}
+                </span>
+              ) : (
+                <span className={msg.type === 'join' ? 'join-msg' : 'leave-msg'}>
+                  {msg.type === 'join' ? '🟢' : '🔴'} {msg.username} {msg.type === 'join' ? 'joined' : 'left'}
+                </span>
+              )}
               <span className="timestamp">
                 {msg.timestamp.toLocaleTimeString()}
               </span>
             </div>
           ))}
+
+          <div className="chat-input-area">
+            <input
+              type="text"
+              value={chatInput}
+              onChange={(e) => setChatInput(e.target.value)}
+              onKeyDown={(e) => e.key === 'Enter' && sendChatMessage()}
+              placeholder="Send a message..."
+              className="chat-input"
+            />
+            <button onClick={sendChatMessage} className="btn-chat-send">Send</button>
+          </div>
         </div>
       </div>
+
 
       <footer className="editor-footer">
         <span className="doc-info">

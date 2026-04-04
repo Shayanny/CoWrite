@@ -458,5 +458,7 @@ func flushDocumentToPostgres(documentID int) {
 		return
 	}
 
-	log.Printf("[Redis] Flushed document %d to PostgreSQL", documentID)
+	// Delete from Redis now that it's saved to PostgreSQL
+    config.RDB.Del(config.Ctx, key)
+    log.Printf("[Redis] Flushed and cleared document %d from Redis", documentID)
 }
