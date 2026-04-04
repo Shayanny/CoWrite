@@ -118,6 +118,9 @@ func removeClientFromRoom(client *Client) {
 		roomManager.mu.Lock()
 		delete(roomManager.rooms, client.documentID)
 		roomManager.mu.Unlock()
+
+		// Last user left - flush to PostgreSQL
+		flushDocumentToPostgres(client.documentID)
 	}
 }
 
@@ -426,10 +429,34 @@ func getDocumentContent(documentID int) (string, string, error) {
 func saveDocumentContent(documentID int, title, content string) error {
 	key := fmt.Sprintf("doc:%d:content", documentID)
 
-	// Always write to Redis
-	config.RDB.Set(config.Ctx, key, content, 24*time.Hour)
-
-	// Also write to PostgreSQL
-	_, err := models.UpdateDocument(config.DB, documentID, title, content)
+	// Only write to Redis during active editing
+	err := config.RDB.Set(config.Ctx, key, content, 24*time.Hour).Err()
 	return err
+}
+
+func flushDocumentToPostgres(documentID int) {
+	key := fmt.Sprintf("doc:%d:content", documentID)
+
+	// Get latest content from Redis
+	content, err := config.RDB.Get(config.Ctx, key).Result()
+	if err != nil {
+		log.Printf("[Redis] Nothing to flush for document %d", documentID)
+		return
+	}
+
+	// Get the document title from PostgreSQL
+	doc, err := models.GetDocumentByID(config.DB, documentID)
+	if err != nil {
+		log.Printf("[Redis] Failed to get document title for flush: %v", err)
+		return
+	}
+
+	// Save to PostgreSQL
+	_, err = models.UpdateDocument(config.DB, documentID, doc.Title, content)
+	if err != nil {
+		log.Printf("[Redis] Failed to flush document %d to PostgreSQL: %v", err)
+		return
+	}
+
+	log.Printf("[Redis] Flushed document %d to PostgreSQL", documentID)
 }
