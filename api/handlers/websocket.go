@@ -12,10 +12,10 @@ import (
 	"minidocs/api/models"
 	"minidocs/api/utils"
 
+	"fmt"
 	"github.com/gorilla/mux"
 	"github.com/gorilla/websocket"
 	dmp "github.com/sergi/go-diff/diffmatchpatch"
-	"fmt"
 )
 
 // upgrader upgrades an HTTP connection to a WebSocket connection.
@@ -262,8 +262,8 @@ func readPump(client *Client, room *Room) {
 
 		// DMP LOGIC
 		if msg.Type == "edit" {
-			// Get current document from database
-			doc, err := models.GetDocumentByID(config.DB, msg.DocumentID)
+			// Get current document content (Redis first, PostgreSQL fallback)
+			currentContent, title, err := getDocumentContent(msg.DocumentID)
 			if err != nil {
 				log.Printf("Error getting document: %v", err)
 				continue
@@ -276,7 +276,7 @@ func readPump(client *Client, room *Room) {
 				continue
 			}
 
-			newContent := doc.Content // Start with current content
+			newContent := currentContent // Start with current content
 
 			// Try to apply patches if provided
 			if patchText, ok := payload["patches"].(string); ok && patchText != "" {
@@ -293,12 +293,12 @@ func readPump(client *Client, room *Room) {
 					}
 				} else {
 					// Apply patches to server's current content
-					result, applied := dmpInstance.PatchApply(patches, doc.Content)
+					result, applied := dmpInstance.PatchApply(patches, currentContent)
 					start := time.Now()
 
 					elapsed := time.Since(start)
 					log.Printf("[DMP] Patch apply took: %v | patch size: %d bytes | content size: %d bytes",
-						elapsed, len(patchText), len(doc.Content))
+						elapsed, len(patchText), len(currentContent))
 					// Check if all patches applied successfully
 					allApplied := true
 					for _, success := range applied {
@@ -311,7 +311,7 @@ func readPump(client *Client, room *Room) {
 					if allApplied {
 						newContent = result
 						log.Printf(" Patches applied successfully. Old length: %d, New length: %d",
-							len(doc.Content), len(newContent))
+							len(currentContent), len(newContent))
 					} else {
 						log.Printf(" Some patches failed, using fallback")
 						// Fallback to full content
@@ -327,9 +327,9 @@ func readPump(client *Client, room *Room) {
 			}
 
 			// Update document in database
-			_, err = models.UpdateDocument(config.DB, msg.DocumentID, doc.Title, newContent)
+			err = saveDocumentContent(msg.DocumentID, title, newContent)
 			if err != nil {
-				log.Printf("Error updating document: %v", err)
+				log.Printf("Error saving document: %v", err)
 			}
 
 			//if shouldSaveToDatabase(client.lastDBSave) {
@@ -401,35 +401,35 @@ func mustMarshal(v interface{}) []byte {
 
 // getDocumentContent gets content from Redis if available, falls back to PostgreSQL
 func getDocumentContent(documentID int) (string, string, error) {
-    key := fmt.Sprintf("doc:%d:content", documentID)
-    
-    // Try Redis first
-    content, err := config.RDB.Get(config.Ctx, key).Result()
-    if err == nil {
-        log.Printf("[Redis] Cache hit for document %d", documentID)
-        return content, "", nil
-    }
+	key := fmt.Sprintf("doc:%d:content", documentID)
 
-    // Redis miss - load from PostgreSQL
-    log.Printf("[Redis] Cache miss for document %d, loading from PostgreSQL", documentID)
-    doc, err := models.GetDocumentByID(config.DB, documentID)
-    if err != nil {
-        return "", "", err
-    }
+	// Try Redis first
+	content, err := config.RDB.Get(config.Ctx, key).Result()
+	if err == nil {
+		log.Printf("[Redis] Cache hit for document %d", documentID)
+		return content, "", nil
+	}
 
-    // Store in Redis for next time
-    config.RDB.Set(config.Ctx, key, doc.Content, 24*time.Hour)
-    return doc.Content, doc.Title, nil
+	// Redis miss - load from PostgreSQL
+	log.Printf("[Redis] Cache miss for document %d, loading from PostgreSQL", documentID)
+	doc, err := models.GetDocumentByID(config.DB, documentID)
+	if err != nil {
+		return "", "", err
+	}
+
+	// Store in Redis for next time
+	config.RDB.Set(config.Ctx, key, doc.Content, 24*time.Hour)
+	return doc.Content, doc.Title, nil
 }
 
 // saveDocumentContent saves content to Redis and PostgreSQL
 func saveDocumentContent(documentID int, title, content string) error {
-    key := fmt.Sprintf("doc:%d:content", documentID)
-    
-    // Always write to Redis
-    config.RDB.Set(config.Ctx, key, content, 24*time.Hour)
-    
-    // Also write to PostgreSQL
-    _, err := models.UpdateDocument(config.DB, documentID, title, content)
-    return err
+	key := fmt.Sprintf("doc:%d:content", documentID)
+
+	// Always write to Redis
+	config.RDB.Set(config.Ctx, key, content, 24*time.Hour)
+
+	// Also write to PostgreSQL
+	_, err := models.UpdateDocument(config.DB, documentID, title, content)
+	return err
 }
