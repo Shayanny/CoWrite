@@ -38,6 +38,7 @@ function Editor() {
   const [inviteEmail, setInviteEmail] = useState('');
   const [inviteLoading, setInviteLoading] = useState(false);
   const [inviteMessage, setInviteMessage] = useState('');
+  const [copied, setCopied] = useState(false);
 
   //const [userCursors, setUserCursors] = useState<Record<string, { position: number, length: number, color: string }>>({});
 
@@ -246,7 +247,7 @@ function Editor() {
     }
 
     syncTimerRef.current = setTimeout(() => {
-    
+
       const patchStart = performance.now();
       const patches = dmp.current.patch_make(previousContent.current, value);
       const patchText = dmp.current.patch_toText(patches);
@@ -552,6 +553,16 @@ function Editor() {
                 disabled={inviteLoading}
               >
                 Cancel
+              </button>
+              <button
+                className="btn-copy-link"
+                onClick={() => {
+                  navigator.clipboard.writeText(window.location.href);
+                  setCopied(true);
+                  setTimeout(() => setCopied(false), 2000);
+                }}
+              >
+                {copied ? '✅ Copied!' : '🔗 Copy Link'}
               </button>
               <button
                 className="btn-send-invite"
