@@ -21,8 +21,6 @@ function Editor() {
   const [error, setError] = useState('');
   const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
   const currentUser = JSON.parse(localStorage.getItem('user') || '{}');
-  console.log('👤 Full currentUser object:', currentUser);
-  console.log('👤 Keys in currentUser:', Object.keys(currentUser));
 
   const syncTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const [activeUsers, setActiveUsers] = useState<string[]>([]);
@@ -138,20 +136,13 @@ function Editor() {
     });
 
     const unsubEdit = wsService.on('edit', (message) => {
-      console.log(' Received edit message:', message);
-      console.log(' From user:', message.username);
-      console.log(' Current user:', currentUser.username);
 
       // Skip if this is our own edit
       if (message.username !== currentUser.username && message.documentId === documentId) {
-        console.log(' Applying edit from other user');
 
         const payload = message.payload as any;
 
         if (payload.fullContent) {
-          console.log(' Updating content');
-          console.log(' Old content length:', content.length);
-          console.log(' New content length:', payload.fullContent.length);
 
           const receiveTime = performance.now();
           if (payload.sentAt) {
@@ -246,8 +237,6 @@ function Editor() {
   };
 
   const handleContentChange = (value: string) => {
-    console.log(' Content changed:', value);
-    console.log(' Previous:', previousContent.current);
 
     setContent(value);
     setHasUnsavedChanges(true);
@@ -257,9 +246,7 @@ function Editor() {
     }
 
     syncTimerRef.current = setTimeout(() => {
-      console.log(' Sending after debounce');
-      console.log(' Calculating diff...');
-
+    
       const patchStart = performance.now();
       const patches = dmp.current.patch_make(previousContent.current, value);
       const patchText = dmp.current.patch_toText(patches);
@@ -546,7 +533,7 @@ function Editor() {
                 placeholder="collaborator@email.com"
                 value={inviteEmail}
                 onChange={(e) => setInviteEmail(e.target.value)}
-                onKeyPress={(e) => e.key === 'Enter' && handleInvite()}
+                onKeyDown={(e) => e.key === 'Enter' && handleInvite()}
                 className="invite-input"
                 disabled={inviteLoading}
               />
