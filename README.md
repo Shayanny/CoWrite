@@ -12,46 +12,37 @@ Backend: Go (Golang)
 Database: PostgreSQL (Neon Cloud)
 Caching/Sessions: Redis
 Infrastructure: Docker Compose
+Real-time: WebSockets (Gorilla) + Google Diff-Match-Patch
+Caching: Redis
 
 ---
 
 ## Current Progress
 
-Backend (Go):
+**Backend (Go):**
+- User registration and login with JWT authentication
+- Password hashing with bcrypt
+- Authentication middleware for protected routes
+- Full Document CRUD API (Create, Read, Update, Delete)
+- Owner validation and permission checks
+- WebSocket server with room management
+- Diff-Match-Patch patch-based synchronisation
+- Redis caching for active documents with PostgreSQL fallback
+- Email invitations via Gmail SMTP
+- CORS configuration for frontend integration
 
-User registration and login with JWT authentication
-Password hashing with bcrypt
-Authentication middleware for protected routes
-Full Document CRUD API (Create, Read, Update, Delete)
-Owner validation and security patterns
-CORS configuration for frontend integration
-Neon PostgreSQL cloud database integration
+**Frontend (React + TypeScript):**
+- User authentication flow (login/register pages)
+- JWT token management with localStorage
+- Dashboard with document management and shared document indicators
+- Rich text editor (Quill.js) with formatting toolbar
+- Real-time collaborative editing with active user presence
+- Discussion box with join/leave activity feed
+- Email invite modal with QR code generation
+- Copy link button with confirmation state
+- Word and character count in editor footer
+- Auto-save with unsaved changes tracking
 
-Frontend (React + TypeScript):
-
-User authentication flow (login/register pages)
-JWT token management with localStorage
-Complete API service layer architecture
-Dashboard with document management:
-
-Grid layout displaying all user documents
-Create new documents via modal
-Delete documents with confirmation
-Document preview and metadata
-
-
-Document Editor:
-
-Load and edit documents by ID
-Editable title and content fields
-Save functionality with status indicators
-Auto-Save functionality with 3 second debouncing
-Unsaved changes tracking and user warnings
-Rich text editor integration (Quill.js) - in progress
-Navigation between dashboard and editor
-
-Client-side routing system
-Professional UI styling with gradient theme
 
 Frontend Foundation: Login page with styling
 GitHub Project Board: Task tracking and progress management
@@ -63,12 +54,11 @@ GitHub Project Board: Task tracking and progress management
 
 ## Next Steps
 
-- Resolve React 19 compatibility with react-quill library
-- Complete rich text formatting (bold, italic, headers, lists, links)
-- Implement WebSocket services for real-time document editing
-- Add discussion box functionality
+- PDF export
+- Version history
 
 ---
+
 ## Key Features (Planned)
 
 Real-time collaborative editing 
@@ -83,6 +73,6 @@ Version history tracking
 
 ## Future Plans
 
-Currently running locally with Docker.  
-The long-term goal is to deploy the full system to the cloud,  
+Currently running locally with Docker.
+The long-term goal is to deploy the full system to the cloud,
 potentially using AWS or another provider once development stabilizes.
