@@ -40,6 +40,10 @@ function Editor() {
   const [inviteMessage, setInviteMessage] = useState('');
   const [copied, setCopied] = useState(false);
 
+  const getQRCodeUrl = (text: string) => {
+    return `https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=${encodeURIComponent(text)}`;
+  };
+
 
   //const [userCursors, setUserCursors] = useState<Record<string, { position: number, length: number, color: string }>>({});
 
@@ -567,6 +571,16 @@ function Editor() {
                   {inviteMessage}
                 </p>
               )}
+
+              <div className="qr-code-section">
+                <p className="qr-label">Or share this QR code:</p>
+                <img
+                  src={getQRCodeUrl(window.location.href)}
+                  alt="QR Code"
+                  width={150}
+                  height={150}
+                />
+              </div>
             </div>
 
             <div className="modal-footer">

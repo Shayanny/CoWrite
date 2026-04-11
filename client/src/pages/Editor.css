@@ -551,3 +551,14 @@
   color: #888;
   font-size: 13px;
 }
+
+.qr-code-section {
+  margin-top: 20px;
+  text-align: center;
+}
+
+.qr-label {
+  color: #666;
+  font-size: 13px;
+  margin-bottom: 10px;
+}
