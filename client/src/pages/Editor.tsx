@@ -5,6 +5,8 @@ import ReactQuill from 'react-quill';
 import 'react-quill/dist/quill.snow.css';
 import { wsService } from '../services/websocketService';
 import DiffMatchPatch from 'diff-match-patch';
+import jsPDF from 'jspdf';
+import html2canvas from 'html2canvas';
 
 function Editor() {
   // Get document ID from URL
@@ -62,6 +64,10 @@ function Editor() {
   useEffect(() => {
     loadDocument();
   }, []);
+
+  const handleExportPDF = () => {
+      // coming soon
+    };
 
 
   // Set up WebSocket listeners once on mount
@@ -182,6 +188,7 @@ function Editor() {
         });
       }
     });
+
 
 
     // Cleanup all subscriptions when component unmounts
@@ -430,6 +437,12 @@ function Editor() {
         </button>
         <div className="editor-actions">
           {saveStatus && <span className="save-status">{saveStatus}</span>}
+          <button
+            onClick={handleExportPDF}
+            className="btn-export"
+          >
+            Export PDF
+          </button>
           <button
             onClick={() => handleSave(false)}
             className="btn-save"
