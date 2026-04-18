@@ -1,6 +1,6 @@
 # CoWrite
 
-**Work in progress for my Final Year Project at ATU Galway.**
+**Final Year Project at ATU Galway — B.Sc. (Hons) Software Development**
 
 CoWrite will be a real-time collaborative document editing platform that enables teams to work together seamlessly. Users can create, edit, and share documents simultaneously through invite links or QR codes, with an integrated discussion box for communication without leaving the editor.
 
@@ -30,6 +30,7 @@ Caching: Redis
 - Redis caching for active documents with PostgreSQL fallback
 - Email invitations via Gmail SMTP
 - CORS configuration for frontend integration
+- Automatic flush to PostgreSQL when last user leaves
 
 **Frontend (React + TypeScript):**
 - User authentication flow (login/register pages)
@@ -42,10 +43,11 @@ Caching: Redis
 - Copy link button with confirmation state
 - Word and character count in editor footer
 - Auto-save with unsaved changes tracking
+- PDF export with formatting preserved
 
 
-Frontend Foundation: Login page with styling
 GitHub Project Board: Task tracking and progress management
+
 - Local validation:
   - **Frontend:** [http://localhost:5173](http://localhost:5173)
   - **API:** [http://localhost:8080](http://localhost:8080)
@@ -54,7 +56,6 @@ GitHub Project Board: Task tracking and progress management
 
 ## Next Steps
 
-- PDF export
 - Version history
 
 ---
@@ -68,6 +69,7 @@ Integrated discussion box
 User presence indicators
 Sub-300ms edit latency
 Version history tracking
+PDF export
 
 ---
 
