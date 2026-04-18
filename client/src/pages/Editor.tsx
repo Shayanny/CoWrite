@@ -52,6 +52,9 @@ function Editor() {
   const dmp = useRef(new DiffMatchPatch());
   const previousContent = useRef('');
 
+  const quillRef = useRef<ReactQuill>(null);
+
+
   //const cursorColors = ['#3b82f6', '#ef4444', '#10b981', '#f59e0b', '#8b5cf6'];
   //const getUserColor = (username: string) => {
   //   const hash = username.split('').reduce((acc, char) => acc + char.charCodeAt(0), 0);
@@ -168,8 +171,10 @@ function Editor() {
         const payload = message.payload as any;
 
         if (payload.fullContent) {
-
+          const editor = quillRef.current?.getEditor();
+          const selection = editor?.getSelection();
           const receiveTime = performance.now();
+
           if (payload.sentAt) {
             console.log(`[DMP] Round-trip latency: ${(receiveTime - payload.sentAt).toFixed(2)}ms`);
           }
@@ -178,7 +183,12 @@ function Editor() {
           setContent(payload.fullContent);
           previousContent.current = payload.fullContent;
 
-          console.log(' Content updated in state');
+          // Restore cursor position after update
+          setTimeout(() => {
+            if (selection) {
+              editor?.setSelection(selection);
+            }
+          }, 10);
         } else {
           console.log(' No fullContent in payload');
         }
@@ -477,6 +487,7 @@ function Editor() {
 
         <div className="editor-wrapper">
           <ReactQuill
+            ref={quillRef}
             theme="snow"
             value={content}
             onChange={handleContentChange}
