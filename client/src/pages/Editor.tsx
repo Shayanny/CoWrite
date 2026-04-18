@@ -534,18 +534,18 @@ function Editor() {
               </span>
             </div>
           ))}
+        </div>
 
-          <div className="chat-input-area">
-            <input
-              type="text"
-              value={chatInput}
-              onChange={(e) => setChatInput(e.target.value)}
-              onKeyDown={(e) => e.key === 'Enter' && sendChatMessage()}
-              placeholder="Send a message..."
-              className="chat-input"
-            />
-            <button onClick={sendChatMessage} className="btn-chat-send">Send</button>
-          </div>
+        <div className="chat-input-area">
+          <input
+            type="text"
+            value={chatInput}
+            onChange={(e) => setChatInput(e.target.value)}
+            onKeyDown={(e) => e.key === 'Enter' && sendChatMessage()}
+            placeholder="Send a message..."
+            className="chat-input"
+          />
+          <button onClick={sendChatMessage} className="btn-chat-send">Send</button>
         </div>
       </div>
 

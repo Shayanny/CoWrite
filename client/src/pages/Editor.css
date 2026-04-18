@@ -253,7 +253,7 @@
 .chat-messages {
   flex: 1;
   overflow-y: auto;
-  padding: 12px;
+  padding: 8px;
 }
 
 .chat-message {
@@ -544,7 +544,7 @@
 }
 
 .chat-msg {
-  color: #e0e0e0;
+  color: #028090;
 }
 
 .word-count {
