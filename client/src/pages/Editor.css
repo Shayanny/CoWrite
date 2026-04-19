@@ -102,11 +102,13 @@
 }
 
 .editor-wrapper {
-  flex: 1;
-  display: flex;
-  flex-direction: column;
+  width: 210mm;
+  min-height: 297mm;
+  margin: 0 auto;
   background: white;
-  border-radius: 0 0 4px 4px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+  padding: 20mm;
+  box-sizing: border-box;
 }
 
 .editor-wrapper .quill {
@@ -130,11 +132,18 @@
   background: white;
 }
 
-.editor-wrapper .ql-editor {
+.editor-wrapper  {
   min-height: calc(100vh - 400px);
   padding: 30px 40px 60px;
   background: white !important;
   color: #000 !important;
+}
+
+.ql-editor {
+  min-height: 257mm; /* 297mm - 40mm padding */
+  font-size: 12pt;
+  line-height: 1.5;
+  color: #000;
 }
 
 .editor-wrapper .ql-editor.ql-blank::before {
