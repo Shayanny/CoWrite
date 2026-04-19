@@ -72,16 +72,24 @@ function Editor() {
     const editorElement = window.document.querySelector('.ql-editor') as HTMLElement;
     if (!editorElement) return;
 
-    const canvas = await html2canvas(editorElement);
+    const canvas = await html2canvas(editorElement, {
+      scale: 2, // doubles the resolution
+      useCORS: true,
+      backgroundColor: '#ffffff'
+    });
+
     const imgData = canvas.toDataURL('image/png');
 
     const pdf = new jsPDF({
       orientation: 'portrait',
-      unit: 'px',
-      format: [canvas.width, canvas.height]
+      unit: 'mm',
+      format: 'a4'
     });
 
-    pdf.addImage(imgData, 'PNG', 0, 0, canvas.width, canvas.height);
+    const pdfWidth = pdf.internal.pageSize.getWidth();
+    const pdfHeight = (canvas.height * pdfWidth) / canvas.width;
+
+    pdf.addImage(imgData, 'PNG', 0, 0, pdfWidth, pdfHeight);
     pdf.save(`${title || 'document'}.pdf`);
   };
 
