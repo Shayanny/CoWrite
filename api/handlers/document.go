@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"log"
 	"net/http"
+	"os"
 	"strconv"
 	"time"
 
@@ -372,7 +373,11 @@ func InviteUserToDocument(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Generate invite URL
-	inviteURL := fmt.Sprintf("http://localhost:5173/document/%d", id)
+	baseURL := os.Getenv("CLIENT_URL")
+	if baseURL == "" {
+		baseURL = "http://localhost:5173"
+	}
+	inviteURL := fmt.Sprintf("%s/document/%d", baseURL, id)
 
 	// Send invitation email
 	err = utils.SendInviteEmail(
