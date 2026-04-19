@@ -22,7 +22,8 @@ func InitRedis() {
 	// Test the connection
 	_, err := RDB.Ping(Ctx).Result()
 	if err != nil {
-		log.Fatal("Error connecting to Redis:", err)
+		log.Println("Warning: Could not connect to Redis:", err)
+		return
 	}
 
 	fmt.Println("Successfully connected to Redis!")
