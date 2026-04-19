@@ -53,6 +53,7 @@ func SendInviteEmail(recipientEmail, recipientName, documentTitle, inviteURL, se
 
 	// Send email
 	d := gomail.NewDialer(smtpHost, smtpPort, smtpUser, smtpPass)
+	d.SSL = true
 
 	if err := d.DialAndSend(m); err != nil {
 		return fmt.Errorf("failed to send email: %v", err)
