@@ -1,4 +1,4 @@
-const API_BASE_URL = import.meta.env.VITE_API_BASE || 'http://localhost:8080';
+const API_BASE_URL = import.meta.env.VITE_API_BASE || 'ws://localhost:8080';
 
 interface ApiResponse<T> {
   data?: T;
