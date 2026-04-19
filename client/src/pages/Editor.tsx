@@ -397,6 +397,18 @@ function Editor() {
 
   const sendChatMessage = () => {
     if (!chatInput.trim()) return;
+
+    // Add to own chat immediately
+    setChatMessages(prev => {
+      const newMessages = [...prev, {
+        type: 'chat' as const,
+        username: currentUser.username,
+        timestamp: new Date(),
+        text: chatInput
+      }];
+      return newMessages.slice(-20);
+    });
+
     wsService.send('chat', { text: chatInput });
     setChatInput('');
   };
