@@ -25,7 +25,8 @@ var upgrader = websocket.Upgrader{
 	WriteBufferSize: 1024,
 	CheckOrigin: func(r *http.Request) bool {
 		origin := r.Header.Get("Origin")
-		return origin == "http://localhost:5173"
+		return origin == "http://localhost:5173" ||
+			origin == "https://courageous-presence-production.up.railway.app"
 	},
 }
 
@@ -459,6 +460,6 @@ func flushDocumentToPostgres(documentID int) {
 	}
 
 	// Delete from Redis now that it's saved to PostgreSQL
-    config.RDB.Del(config.Ctx, key)
-    log.Printf("[Redis] Flushed and cleared document %d from Redis", documentID)
+	config.RDB.Del(config.Ctx, key)
+	log.Printf("[Redis] Flushed and cleared document %d from Redis", documentID)
 }
