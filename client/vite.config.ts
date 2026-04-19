@@ -6,6 +6,7 @@ export default defineConfig({
   plugins: [react()],
   preview: {
     port: parseInt(process.env.PORT || '3000'),
-    host: true
+    host: true,
+    allowedHosts: ['courageous-presence-production.up.railway.app']
   }
 })
