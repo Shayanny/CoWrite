@@ -1,19 +1,19 @@
 package main
 
 import (
+	"encoding/json"
 	"fmt"
 	"log"
 	"net/http"
 	"os"
-	"encoding/json"
 
 	"minidocs/api/config"
 	"minidocs/api/handlers"
 	"minidocs/api/middleware"
 	"minidocs/api/utils"
 
+	corsHandlers "github.com/gorilla/handlers"
 	"github.com/gorilla/mux"
-	 corsHandlers "github.com/gorilla/handlers"
 	"github.com/joho/godotenv"
 )
 
@@ -22,7 +22,7 @@ func main() {
 	// Load environment variables
 	err := godotenv.Load()
 	if err != nil {
-		log.Fatal("Error loading .env file")
+		log.Println("No .env file found, using environment variables")
 	}
 
 	// Initialize database connection
@@ -37,10 +37,9 @@ func main() {
 
 	// Testing route
 	router.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
-    w.WriteHeader(http.StatusOK)
-    w.Write([]byte("CoWrite API is running!"))
+		w.WriteHeader(http.StatusOK)
+		w.Write([]byte("CoWrite API is running!"))
 	}).Methods("GET")
-
 
 	// Authentication routes
 	router.HandleFunc("/api/register", handlers.Register).Methods("POST")
@@ -49,7 +48,7 @@ func main() {
 	router.Handle("/api/protected", middleware.AuthMiddleware(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		// Get user info from context
 		claims := r.Context().Value(middleware.UserContextKey).(*utils.Claims)
-		
+
 		// Send back user info as JSON
 		w.Header().Set("Content-Type", "application/json")
 		w.WriteHeader(http.StatusOK)
@@ -65,32 +64,31 @@ func main() {
 
 	// Document routes (all protected with AuthMiddleware)
 	router.Handle("/api/documents", middleware.AuthMiddleware(
-	http.HandlerFunc(handlers.CreateDocument),
+		http.HandlerFunc(handlers.CreateDocument),
 	)).Methods("POST")
 
 	router.Handle("/api/documents", middleware.AuthMiddleware(
-	http.HandlerFunc(handlers.GetMyDocuments),
+		http.HandlerFunc(handlers.GetMyDocuments),
 	)).Methods("GET")
 
 	router.Handle("/api/documents/{id}", middleware.AuthMiddleware(
-	http.HandlerFunc(handlers.GetDocument),
+		http.HandlerFunc(handlers.GetDocument),
 	)).Methods("GET")
 
 	router.Handle("/api/documents/{id}", middleware.AuthMiddleware(
-	http.HandlerFunc(handlers.UpdateDocument),
+		http.HandlerFunc(handlers.UpdateDocument),
 	)).Methods("PUT")
 
 	router.Handle("/api/documents/{id}", middleware.AuthMiddleware(
-	http.HandlerFunc(handlers.DeleteDocument),
+		http.HandlerFunc(handlers.DeleteDocument),
 	)).Methods("DELETE")
 
 	router.Handle("/api/documents/{id}/invite", middleware.AuthMiddleware(
-	http.HandlerFunc(handlers.InviteUserToDocument),
+		http.HandlerFunc(handlers.InviteUserToDocument),
 	)).Methods("POST")
 
-	 // WebSocket route (auth is handled inside the handler via query param token)
-     router.HandleFunc("/ws/{documentId}", handlers.WebSocketHandler)
-
+	// WebSocket route (auth is handled inside the handler via query param token)
+	router.HandleFunc("/ws/{documentId}", handlers.WebSocketHandler)
 
 	// Get port from environment or use default
 	port := os.Getenv("PORT")
@@ -99,9 +97,9 @@ func main() {
 	}
 
 	corsHandler := corsHandlers.CORS(
-	corsHandlers.AllowedOrigins([]string{"http://localhost:5173"}),
-	corsHandlers.AllowedMethods([]string{"GET", "POST", "PUT", "DELETE", "OPTIONS"}),
-	corsHandlers.AllowedHeaders([]string{"Content-Type", "Authorization"}),
+		corsHandlers.AllowedOrigins([]string{"http://localhost:5173"}),
+		corsHandlers.AllowedMethods([]string{"GET", "POST", "PUT", "DELETE", "OPTIONS"}),
+		corsHandlers.AllowedHeaders([]string{"Content-Type", "Authorization"}),
 	)(router)
 
 	// Start server

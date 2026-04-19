@@ -17,7 +17,7 @@ func InitDB() {
 	// Load environment variables from .env file
 	err := godotenv.Load()
 	if err != nil {
-		log.Fatal("Error loading .env file")
+		log.Println("No .env file found, using environment variables")
 	}
 
 	// Get database credentials from environment variables
@@ -40,7 +40,7 @@ func InitDB() {
 	//	host, port, user, password, dbname)
 
 	// Open database connection
-//	DB, err = sql.Open("postgres", psqlInfo)
+	//	DB, err = sql.Open("postgres", psqlInfo)
 	//if err != nil {
 	//	log.Fatal("Error connecting to database:", err)
 	//}
