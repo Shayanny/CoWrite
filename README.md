@@ -2,9 +2,12 @@
 
 **Final Year Project at ATU Galway — B.Sc. (Hons) Software Development**
 
-CoWrite will be a real-time collaborative document editing platform that enables teams to work together seamlessly. Users can create, edit, and share documents simultaneously through invite links or QR codes, with an integrated discussion box for communication without leaving the editor.
+CoWrite is a real-time collaborative document editing platform that enables teams to work together seamlessly. Users can create, edit, and share documents simultaneously through invite links, email invitations, or QR codes, with an integrated discussion box for communication without leaving the editor.
+
+**Live:** [https://cowrite.up.railway.app](https://cowrite.up.railway.app)
 
 ---
+
 ## Tech Stack
 
 Frontend: React + TypeScript (Vite)
@@ -13,11 +16,10 @@ Database: PostgreSQL (Neon Cloud)
 Caching/Sessions: Redis
 Infrastructure: Docker Compose
 Real-time: WebSockets (Gorilla) + Google Diff-Match-Patch
-Caching: Redis
 
 ---
 
-## Current Progress
+## Features
 
 **Backend (Go):**
 - User registration and login with JWT authentication
@@ -26,11 +28,11 @@ Caching: Redis
 - Full Document CRUD API (Create, Read, Update, Delete)
 - Owner validation and permission checks
 - WebSocket server with room management
-- Diff-Match-Patch patch-based synchronisation
+- Diff-Match-Patch patch-based synchronisation with fallback to full content
 - Redis caching for active documents with PostgreSQL fallback
-- Email invitations via Gmail SMTP
-- CORS configuration for frontend integration
 - Automatic flush to PostgreSQL when last user leaves
+- Email invitations via Gmail SMTP
+- CORS configuration for Railway deployment
 
 **Frontend (React + TypeScript):**
 - User authentication flow (login/register pages)
@@ -45,36 +47,30 @@ Caching: Redis
 - Auto-save with unsaved changes tracking
 - PDF export with formatting preserved
 
+---
 
-GitHub Project Board: Task tracking and progress management
+## Deployment
 
-- Local validation:
-  - **Frontend:** [http://localhost:5173](http://localhost:5173)
-  - **API:** [http://localhost:8080](http://localhost:8080)
+- **Live URL:** [https://cowrite.up.railway.app](https://cowrite.up.railway.app)
+- **Platform:** Railway (backend + frontend)
+- **Database:** Neon PostgreSQL (cloud-hosted)
+- **Local development:** Docker Compose
+
+```bash
+docker compose up --build
+```
+
+- Local Frontend: [http://localhost:5173](http://localhost:5173)
+- Local API: [http://localhost:8080](http://localhost:8080)
 
 ---
 
-## Next Steps
+## Future Work
 
-- Version history
-
----
-
-## Key Features (Planned)
-
-Real-time collaborative editing 
-User authentication and session management
-Document sharing via unique URLs and QR codes
-Integrated discussion box
-User presence indicators
-Sub-300ms edit latency
-Version history tracking
-PDF export
+- Version history / document snapshots
 
 ---
 
-## Future Plans
+## Project Management
 
-Currently running locally with Docker.
-The long-term goal is to deploy the full system to the cloud,
-potentially using AWS or another provider once development stabilizes.
+GitHub Project Board: Task tracking and progress management throughout development.
