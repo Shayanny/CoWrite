@@ -7,6 +7,6 @@ export default defineConfig({
   preview: {
     port: parseInt(process.env.PORT || '3000'),
     host: true,
-    allowedHosts: ['courageous-presence-production.up.railway.app']
+    allowedHosts: ['courageous-presence-production.up.railway.app' , 'https://cowrite.up.railway.app']
   }
 })
