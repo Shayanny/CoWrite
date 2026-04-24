@@ -99,7 +99,8 @@ func main() {
 	corsHandler := corsHandlers.CORS(
 		corsHandlers.AllowedOrigins([]string{
 			"http://localhost:5173",
-			"https://courageous-presence-production.up.railway.app",
+			"https://cowrite-api.up.railway.app",
+			"https://cowrite.up.railway.app"
 		}),
 		corsHandlers.AllowedMethods([]string{"GET", "POST", "PUT", "DELETE", "OPTIONS"}),
 		corsHandlers.AllowedHeaders([]string{"Content-Type", "Authorization"}),
