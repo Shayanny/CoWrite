@@ -10,12 +10,14 @@ CoWrite is a real-time collaborative document editing platform that enables team
 
 ## Tech Stack
 
-Frontend: React + TypeScript (Vite)
-Backend: Go (Golang)
-Database: PostgreSQL (Neon Cloud)
-Caching/Sessions: Redis
-Infrastructure: Docker Compose
-Real-time: WebSockets (Gorilla) + Google Diff-Match-Patch
+| Layer | Technology |
+|---|---|
+| Frontend | React + TypeScript (Vite) |
+| Backend | Go (Golang) |
+| Database | PostgreSQL (Neon Cloud) |
+| Caching/Sessions | Redis |
+| Infrastructure | Docker Compose |
+| Real-time | WebSockets (Gorilla) + Google Diff-Match-Patch |
 
 ---
 
@@ -29,8 +31,8 @@ Real-time: WebSockets (Gorilla) + Google Diff-Match-Patch
 - Owner validation and permission checks
 - WebSocket server with room management
 - Diff-Match-Patch patch-based synchronisation with fallback to full content
-- Redis caching for active documents with PostgreSQL fallback
-- Automatic flush to PostgreSQL when last user leaves
+- Redis caching for active documents (`doc:{id}:content`, 24hr TTL) with PostgreSQL fallback
+- Automatic flush to PostgreSQL when last user leaves a session
 - Email invitations via Gmail SMTP
 - CORS configuration for Railway deployment
 
@@ -44,33 +46,60 @@ Real-time: WebSockets (Gorilla) + Google Diff-Match-Patch
 - Email invite modal with QR code generation
 - Copy link button with confirmation state
 - Word and character count in editor footer
-- Auto-save with unsaved changes tracking
+- Immediate save on each validated edit with unsaved changes indicator
 - PDF export with formatting preserved
+
+---
+
+## Local Setup
+
+Create a `.env` file in the `/api` directory:
+
+```env
+DATABASE_URL=your_neon_postgres_url
+JWT_SECRET=your_secret_key
+REDIS_ADDR=localhost:6379
+REDIS_PASSWORD=
+SMTP_USER=your_gmail
+SMTP_PASS=your_app_password
+SMTP_HOST=smtp.gmail.com
+SMTP_PORT=587
+CLIENT_URL=http://localhost:5173
+VITE_API_BASE=http://localhost:8080
+VITE_WS_BASE=ws://localhost:8080
+```
+
+Then start all services with Docker Compose:
+
+```bash
+docker compose up --build
+```
+
+| Service | URL |
+|---|---|
+| Frontend | http://localhost:5173 |
+| API | http://localhost:8080 |
 
 ---
 
 ## Deployment
 
 - **Live URL:** [https://cowrite.up.railway.app](https://cowrite.up.railway.app)
-- **Platform:** Railway (backend + frontend)
-- **Database:** Neon PostgreSQL (cloud-hosted)
-- **Local development:** Docker Compose
-
-```bash
-docker compose up --build
-```
-
-- Local Frontend: [http://localhost:5173](http://localhost:5173)
-- Local API: [http://localhost:8080](http://localhost:8080)
+- **Platform:** Railway (backend + frontend as separate services)
+- **Database:** Neon PostgreSQL (serverless, cloud-hosted)
+- **Redis:** Railway managed add-on
+- **Local development:** Docker Compose (Redis + PostgreSQL run as containers)
 
 ---
 
 ## Future Work
 
 - Version history / document snapshots
+- Server-side timestamping for accurate cross-client latency measurement
+- Full in-editor cursor visualisation for collaborators
 
 ---
 
 ## Project Management
 
-GitHub Project Board: Task tracking and progress management throughout development.
+Development was tracked using a GitHub Project board (Kanban) linked to this repository, maintained throughout the project alongside a Gantt chart produced at the proposal stage.
